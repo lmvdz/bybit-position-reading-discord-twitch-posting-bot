@@ -1,0 +1,32 @@
+{
+  "name": "bybit-position-reading-discord-posting-bot",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "start-frontend": "node lib/servers/frontend.js",
+    "start-bot": "node lib/servers/bot.js",
+    "start-payment": "node lib/servers/payment.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@circle-fin/circle-sdk": "^1.1.1",
+    "axios": "^1.1.3",
+    "body-parser": "^1.20.1",
+    "cors": "^2.8.5",
+    "discord.js": "^14.6.0",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "secure-db": "^3.2.1",
+    "twitch-bot": "^1.3.5",
+    "uuid": "^9.0.0",
+    "ws": "^8.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.9",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.3"
+  }
+}
