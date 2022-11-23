@@ -6,6 +6,10 @@ import bodyParser from 'body-parser'
 config()
 
 const bot = new BybitPostingBot();
+
+bot.addUser('M4WjFXob7u3jeGgTyg', 'wijY1CoUYf6KJwPNwy5eorTIvIXFNp7pjReC', '1044457746680004728', '#Lmvdzande')
+bot.addUser('Dfv0YiiuJuz7Y5aIp1', '3teMGGWmcARkm5y9ryOehwx6mWqqqQm6J37H', '1044690741424836732', '#bearkingeth')
+
 bot.start();
 
 const app = express();
