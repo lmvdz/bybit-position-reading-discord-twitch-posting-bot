@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 config();
 
 db.security(process.env.SECURE_DB);
-const users = new db.Database('users')
+const users = new db.Database('users');
 
 interface User {
     ID: string
@@ -156,6 +156,8 @@ export default class BybitPositionBot {
     async restart() {
         console.log('restarting');
         this.discordClient.destroy();
+        await this.loadDiscordBot();
+        await this.discordBotLogin();
         await this.start();
     }
 

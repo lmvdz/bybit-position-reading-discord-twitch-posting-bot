@@ -12,7 +12,7 @@ app.use(bodyParser.json())
 app.get("/*", (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     console.log(ip);
-    res.sendFile(__dirname + '/frontend/dist/index.html');
+    res.sendFile(__dirname + '/frontend/bybit-position-bot/dist/index.html');
 })
 
 app.listen(3214, () => {

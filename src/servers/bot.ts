@@ -35,7 +35,7 @@ app.post("/addUser", (req, res) => {
         }
         
     } else {
-        res.status(300).send("Access Denied")
+        res.status(300).send(ip +  " Access Denied")
     }
     
 })
@@ -78,7 +78,7 @@ app.post('/enableUser', (req, res) => {
             res.send('missing userID')
         }
     } else {
-        res.status(300).send("Access Denied")
+        res.status(300).send(ip +  " Access Denied")
     }
 })
 
@@ -99,7 +99,7 @@ app.post('/disableUser', (req, res) => {
             res.send('missing userID')
         }
     } else {
-        res.status(300).send("Access Denied")
+        res.status(300).send(ip +  " Access Denied")
     }
 })
 
@@ -120,7 +120,7 @@ app.post('/connectToTwitchChannel', (req, res) => {
             res.send('missing userID')
         }
     } else {
-        res.status(300).send("Access Denied")
+        res.status(300).send(ip +  " Access Denied")
     }
 })
 
