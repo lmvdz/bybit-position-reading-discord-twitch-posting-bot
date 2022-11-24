@@ -7,8 +7,15 @@ config()
 
 const bot = new CryptoPositionsBot();
 
-bot.addUser([{'API_KEY': 'M4WjFXob7u3jeGgTyg', 'API_SECRET': 'wijY1CoUYf6KJwPNwy5eorTIvIXFNp7pjReC', 'EXCHANGE_ID': 'bybit'}], '1044457746680004728', '#Lmvdzande')
-bot.addUser([{'API_KEY': 'Dfv0YiiuJuz7Y5aIp1', 'API_SECRET': '3teMGGWmcARkm5y9ryOehwx6mWqqqQm6J37H', 'EXCHANGE_ID': 'bybit'}], '1044690741424836732', '#bearkingeth')
+bot.addUser([{'API_KEY': 'M4WjFXob7u3jeGgTyg', 'API_SECRET': 'wijY1CoUYf6KJwPNwy5eorTIvIXFNp7pjReC', 'EXCHANGE_ID': 'bybit'}], '1044457746680004728', '#Lmvdzande', true, true, true, 5, true).then((userID) => {
+    bot.enableUser(userID);
+    bot.connectToTwitchChannel(userID);
+});
+
+bot.addUser([{'API_KEY': 'Dfv0YiiuJuz7Y5aIp1', 'API_SECRET': '3teMGGWmcARkm5y9ryOehwx6mWqqqQm6J37H', 'EXCHANGE_ID': 'bybit'}], '1044690741424836732', '#bearkingeth', true, true, true, 5, true).then((userID) => {
+    bot.enableUser(userID);
+    bot.connectToTwitchChannel(userID);
+});
 
 bot.start();
 

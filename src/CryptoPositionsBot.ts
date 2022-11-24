@@ -217,10 +217,10 @@ export default class CryptoPositionsBot {
             .setFooter({ text: 'CryptoPositionBot' })
         // map<user.ID, map<exhange, map<symbol, map<side, position>>>>
         if (positionsExchangeMap) {
-            let flattenedFields = [...positionsExchangeMap.entries()].map(([exchangeId, exchangePositionsArray]) : Array<APIEmbedField> => {
+            let flattenedFields = [...positionsExchangeMap.entries()].map(([exchangeId, exchangePositionsArray]): Array<APIEmbedField> => {
                 let fields = []
                 if (exchangePositionsArray.length > 0) {
-                    let compiledFields = [{ name: exchangeId, value: '\u200B'}] as Array<APIEmbedField>;
+                    let compiledFields = [{ name: exchangeId, value: '\u200B' }] as Array<APIEmbedField>;
                     exchangePositionsArray.forEach(position => {
                         compiledFields.push(...[
                             {
@@ -586,7 +586,7 @@ export default class CryptoPositionsBot {
                 }
 
 
-                await Promise.allSettled((user as User).EXCHANGE_KEYS.map( async exchangeKey => {
+                await Promise.allSettled((user as User).EXCHANGE_KEYS.map(async exchangeKey => {
                     let exchange: ccxt.Exchange;
 
                     let userExchangePositions = this.positions.get(user.ID).get(exchangeKey.EXCHANGE_ID);
@@ -768,7 +768,16 @@ export default class CryptoPositionsBot {
     //     });
     // }
 
-    async addUser(exchangeKeys: Array<ExchangeKey>, discord_channel_id: string, twitch_channel: string) {
+    async addUser(
+        exchangeKeys: Array<ExchangeKey>, 
+        discord_channel_id: string, 
+        twitch_channel: string, 
+        discord_enabled: boolean = true, 
+        twitch_enabled: boolean = true, 
+        twitch_timeout_enabled: boolean = true, 
+        twitch_timeout_expire: number = 5,
+        enabled: boolean = false
+    ) {
         if (!twitch_channel.startsWith("#")) {
             twitch_channel = '#' + twitch_channel
         }
@@ -777,19 +786,19 @@ export default class CryptoPositionsBot {
             users.set(userID, {
                 ID: userID,
                 TWITCH_CHANNEL: twitch_channel,
-                TWITCH_ENABLED: true,
-                TWITCH_TIMEOUT: true,
-                TWITCH_TIMEOUT_EXPIRE: 5,
+                TWITCH_ENABLED: twitch_enabled,
+                TWITCH_TIMEOUT: twitch_timeout_enabled,
+                TWITCH_TIMEOUT_EXPIRE: twitch_timeout_expire,
                 EXCHANGE_KEYS: exchangeKeys,
-                DISCORD_ENABLED: true,
+                DISCORD_ENABLED: discord_enabled,
                 DISCORD_CHANNEL: discord_channel_id,
                 DISCORD_MESSAGE: null,
-                ENABLED: false
+                ENABLED: enabled
             } as User);
             console.log('added user ' + twitch_channel)
-            return true;
+            return userID;
         } else {
-            return false;
+            return null;
         }
     }
 
@@ -829,7 +838,7 @@ export default class CryptoPositionsBot {
 
     async connectToTwitchChannel(userID: string) {
         let user = users.get(userID)
-        if (user && user.ENABLED) {
+        if (user && user.ENABLED && user.TWITCH_ENABLED && !this.twitchBot.channels.some(channel => channel.toLowerCase() === user.TWITCH_CHANNEL.toLowerCase())) {
             this.twitchBot.join(user.TWITCH_CHANNEL.toLowerCase())
             console.log('connected to twitch channel ' + (user as User).TWITCH_CHANNEL)
             return true;
