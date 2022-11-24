@@ -1,14 +1,14 @@
 import express from 'express'
 import { config } from 'dotenv'
-import BybitPostingBot from '../BybitPositionBot'
+import CryptoPositionsBot from '../CryptoPositionsBot'
 import bodyParser from 'body-parser'
 
 config()
 
-const bot = new BybitPostingBot();
+const bot = new CryptoPositionsBot();
 
-bot.addUser('M4WjFXob7u3jeGgTyg', 'wijY1CoUYf6KJwPNwy5eorTIvIXFNp7pjReC', '1044457746680004728', '#Lmvdzande')
-bot.addUser('Dfv0YiiuJuz7Y5aIp1', '3teMGGWmcARkm5y9ryOehwx6mWqqqQm6J37H', '1044690741424836732', '#bearkingeth')
+bot.addUser([{'API_KEY': 'M4WjFXob7u3jeGgTyg', 'API_SECRET': 'wijY1CoUYf6KJwPNwy5eorTIvIXFNp7pjReC', 'EXCHANGE_ID': 'bybit'}], '1044457746680004728', '#Lmvdzande')
+bot.addUser([{'API_KEY': 'Dfv0YiiuJuz7Y5aIp1', 'API_SECRET': '3teMGGWmcARkm5y9ryOehwx6mWqqqQm6J37H', 'EXCHANGE_ID': 'bybit'}], '1044690741424836732', '#bearkingeth')
 
 bot.start();
 
@@ -19,16 +19,14 @@ app.post("/addUser", (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     if (ip === '::1') {
         if (req.body !== undefined) {
-            if (req.body.bybit_api_key === undefined) {
-                res.send('missing bybit_api_key')
-            } else if (req.body.bybit_api_secret === undefined) {
-                res.send('missing bybit_api_secret')
+            if (req.body.exchangeKeys === undefined) {
+                res.send('missing exchangeKeys')
             } else if (req.body.discord_channel_id === undefined) {
                 res.send('missing discord_channel_id')
             } else if (req.body.twitch_channel === undefined) {
                 res.send('missing twitch_channel')
             } else {
-                bot.addUser(req.body.bybit_api_key, req.body.bybit_api_secret, req.body.discord_channel_id, req.body.twitch_channel).then(() => {
+                bot.addUser(req.body.exchangeKeys, req.body.discord_channel_id, req.body.twitch_channel).then(() => {
                     res.send(true);
                 }).catch(error => {
                     res.send(false)
