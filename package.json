@@ -4,7 +4,6 @@
   "description": "",
   "scripts": {
     "build": "tsc",
-    "dev": "ts-node src/index.ts",
     "start-frontend": "node lib/servers/frontend.js",
     "start-bot": "node lib/servers/bot.js",
     "start-payment": "node lib/servers/payment.js"
