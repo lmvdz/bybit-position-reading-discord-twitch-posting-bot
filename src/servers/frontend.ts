@@ -8,12 +8,13 @@ config()
 const app = express();
 app.use(cors())
 app.use(bodyParser.json())
+app.use(express.static(__dirname + '/dist'))
 
-app.get("/*", (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    console.log(ip);
-    res.sendFile(__dirname + '/frontend/bybit-position-bot/dist/index.html');
-})
+// app.get("/", cors(), (req, res) => {
+//     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+//     console.log(ip);
+//     res.sendFile(__dirname, '/dist/index.html');
+// })
 
 app.listen(3214, () => {
     console.log("bybit position bot server started on port 3214")

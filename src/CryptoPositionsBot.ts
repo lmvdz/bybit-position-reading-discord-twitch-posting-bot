@@ -1,8 +1,6 @@
-import WebSocket from 'ws';
 import { config } from 'dotenv';
-import crypto from 'crypto';
 import { Channel, Client, GatewayIntentBits, Message, TextChannel, EmbedBuilder, APIEmbedField } from 'discord.js';
-import axios, { AxiosRequestConfig, Method } from 'axios';
+import axios from 'axios';
 import TwitchBot from 'twitch-bot';
 import db from 'secure-db';
 import { v4 as uuidv4 } from 'uuid';
@@ -27,12 +25,15 @@ interface User {
     DISCORD_ENABLED: boolean
     LAST_UPDATE: string
     ENABLED: boolean
+    IS_RUNNING: boolean
 }
 
 interface ExchangeKey {
+    KEY_ID: string
     EXCHANGE_ID: string
     API_KEY: string
     API_SECRET: string
+    DESCRIPTION: string
 }
 
 interface TwitchUserInfo {
@@ -107,68 +108,90 @@ export default class CryptoPositionsBot {
         })
 
         this.twitchBot.on('message', (chatter: any) => {
-            let channelUser = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase() === chatter.channel.toLowerCase())[1];
-            if (channelUser !== undefined && channelUser.TWITCH_ENABLED) {
-                let target = null
-                if (chatter.message === '!position' || chatter.message === '!positions') {
-                    target = chatter.channel.toLowerCase()
-                } else if ((chatter.message.startsWith('!position @') || chatter.message.startsWith('!positions @'))) {
-                    target = "#" + chatter.message.substring(chatter.message.indexOf("@") + 1).split(" ")[0].toLowerCase()
-                }
 
-                if (target !== null) {
+            let target = null
+            if (chatter.message === '!position' || chatter.message === '!positions') {
+                target = chatter.channel.toLowerCase()
+            } else if ((chatter.message.startsWith('!position @') || chatter.message.startsWith('!positions @'))) {
+                target = "#" + chatter.message.substring(chatter.message.indexOf("@") + 1).split(" ")[0].toLowerCase()
+            }
 
-                    let targetUser = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase() === target.toLowerCase())[1];
-                    if (targetUser) {
-                        if (this.twitchCommandTimeouts['position'][chatter.channel] === undefined) {
-                            this.twitchCommandTimeouts['position'][chatter.channel] = {}
-                        }
-                        if (this.twitchCommandTimeouts['position'][chatter.channel][target] === undefined) {
-                            this.twitchCommandTimeouts['position'][chatter.channel][target] = {
-                                timedout: false,
-                                expires: Date.now()
-                            }
-                        }
-                        if (!this.twitchCommandTimeouts['position'][chatter.channel][target].timedout) {
+            if (target !== null) {
 
-                            // check for timeout enabled, and user sending the command isn't the channel owner
-                            if (channelUser.TWITCH_TIMEOUT && (channelUser as User).TWITCH_CHANNEL.toLowerCase().substring(1) !== chatter.username.toLowerCase()) {
-                                this.twitchCommandTimeouts['position'][chatter.channel][target].timedout = true;
-                                this.twitchCommandTimeouts['position'][chatter.channel][target].expires = Date.now() + (channelUser.TWITCH_TIMEOUT_EXPIRE * 1000 * 60);
+                let channelUser = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase() === chatter.channel.toLowerCase());
+                if (channelUser) {
+                    channelUser = channelUser[1]
+                    if (channelUser.ENABLED) {
+                        if (channelUser.TWITCH_ENABLED) {
 
-                                setTimeout(() => {
-                                    this.twitchCommandTimeouts['position'][chatter.channel][target].timedout = false;
-                                }, channelUser.TWITCH_TIMEOUT_EXPIRE * 1000 * 60)
-                            }
-
-                            let updateTime = targetUser.LAST_UPDATE;
-                            let formattedMessage = [`[${target}] Positions (${updateTime})`]
-
-                            let positions = this.positions.get(targetUser.ID);
-                            if (positions) {
-                                positions.forEach((exchangePositionArray, exchangeId) => {
-                                    exchangePositionArray.forEach((position, index) => {
-                                        formattedMessage.push(`[${target}] [${exchangeId}] ${(position.side) === 'long' ? '🟩 LONG ' : (position.side) === 'short' ? '🟥 SHORT ' : ''} ${position.symbol} ${(position.contracts)} @ ${position.entryPrice} uPnL: ${position.unrealizedPnl} liq @ ${position.liquidationPrice}`)
-                                    });
-                                })
-                                if (formattedMessage.length > 1) {
-                                    formattedMessage.forEach((message, index) => {
-                                        setTimeout(() => {
-                                            this.twitchBot.say(message, chatter.channel)
-                                        }, index * 2500)
-                                    })
+                            let targetUser = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase() === target.toLowerCase());
+                            if (targetUser) {
+                                targetUser = targetUser[1]
+                                if (targetUser.ENABLED) {
+                                    if (targetUser.TWITCH_ENABLED) {
+                                        if (this.twitchCommandTimeouts['position'][chatter.channel] === undefined) {
+                                            this.twitchCommandTimeouts['position'][chatter.channel] = {}
+                                        }
+                                        if (this.twitchCommandTimeouts['position'][chatter.channel][target] === undefined) {
+                                            this.twitchCommandTimeouts['position'][chatter.channel][target] = {
+                                                timedout: false,
+                                                expires: Date.now()
+                                            }
+                                        }
+                                        if (!this.twitchCommandTimeouts['position'][chatter.channel][target].timedout) {
+            
+                                            // check for timeout enabled, and user sending the command isn't the channel owner
+                                            if (channelUser.TWITCH_TIMEOUT && (channelUser as User).TWITCH_CHANNEL.toLowerCase().substring(1) !== chatter.username.toLowerCase()) {
+                                                this.twitchCommandTimeouts['position'][chatter.channel][target].timedout = true;
+                                                this.twitchCommandTimeouts['position'][chatter.channel][target].expires = Date.now() + (channelUser.TWITCH_TIMEOUT_EXPIRE * 1000 * 60);
+            
+                                                setTimeout(() => {
+                                                    this.twitchCommandTimeouts['position'][chatter.channel][target].timedout = false;
+                                                }, channelUser.TWITCH_TIMEOUT_EXPIRE * 1000 * 60)
+                                            }
+            
+                                            let updateTime = targetUser.LAST_UPDATE;
+                                            let formattedMessage = [`[${target}] Positions (${updateTime})`]
+            
+                                            let positions = this.positions.get(targetUser.ID);
+                                            if (positions) {
+                                                positions.forEach((exchangePositionArray, exchangeId) => {
+                                                    exchangePositionArray.forEach((position, index) => {
+                                                        formattedMessage.push(`[${target}] [${exchangeId}] ${(position.side) === 'long' ? '🟩 LONG ' : (position.side) === 'short' ? '🟥 SHORT ' : ''} ${(position.contracts)} ${position.symbol} @ ${Number.parseFloat(Number.parseFloat(position.entryPrice).toFixed(2)).toLocaleString('en-US')} uPnL: ${Number.parseFloat(Number.parseFloat(position.unrealizedPnl).toFixed(2)).toLocaleString('en-US')} liq @ ${Number.parseFloat(Number.parseFloat(position.liquidationPrice).toFixed(2)).toLocaleString('en-US')}`)
+                                                    });
+                                                })
+                                                if (formattedMessage.length > 1) {
+                                                    formattedMessage.forEach((message, index) => {
+                                                        setTimeout(() => {
+                                                            this.twitchBot.say(message, chatter.channel)
+                                                        }, index * 2500)
+                                                    })
+                                                } else {
+                                                    this.twitchBot.say(`[${target}] No Positions Open (${updateTime})`, chatter.channel)
+                                                }
+                                            } else {
+                                                this.twitchBot.say(`[${target}] Positions haven't been loaded yet. (${updateTime})`, chatter.channel)
+                                            }
+                                        } else {
+                                            this.twitchBot.say(`[${target}] Please try again in ${Math.floor((this.twitchCommandTimeouts['position'][chatter.channel][target].expires - Date.now()) / 1000)} seconds.`, chatter.channel)
+                                        }
+                                    } else {
+                                        this.twitchBot.say(`[${target}] Does not have twitch enabled.`, chatter.channel)
+                                    }
                                 } else {
-                                    this.twitchBot.say(`[${target}] No Positions Open (${updateTime})`, chatter.channel)
+                                    this.twitchBot.say(`[${target}] Is not enabled.`, chatter.channel)
                                 }
                             } else {
-                                this.twitchBot.say(`[${target}] Positions haven't been loaded yet. (${updateTime})`, chatter.channel)
+                                this.twitchBot.say('User: @' + target.substring(1) + ' not found in DB.', chatter.channel)
                             }
                         } else {
-                            this.twitchBot.say(`[${target}] Please try again in ${Math.floor((this.twitchCommandTimeouts['position'][chatter.channel][target].expires - Date.now()) / 1000)} seconds.`, chatter.channel)
+                            this.twitchBot.say(`[${channelUser.TWITCH_CHANNEL}] Does not have twitch enabled.`, chatter.channel)
                         }
                     } else {
-                        this.twitchBot.say('User: @' + target.substring(1) + ' not found in DB.', chatter.channel)
+                        this.twitchBot.say(`[${channelUser.TWITCH_CHANNEL}] Is not enabled.`, chatter.channel)
                     }
+                } else {
+                    this.twitchBot.say('User: @' + channelUser.TWITCH_CHANNEL.substring(1) + ' not found in DB.', chatter.channel)
                 }
             }
         });
@@ -193,7 +216,7 @@ export default class CryptoPositionsBot {
         this.discordClient.destroy();
         await this.loadDiscordBot();
         await this.discordBotLogin();
-        await this.start();
+        await this.startAll();
     }
 
     async buildDiscordMessageEmbed(userID: string): Promise<EmbedBuilder> {
@@ -229,22 +252,22 @@ export default class CryptoPositionsBot {
                             },
                             {
                                 name: 'Size',
-                                value: Number.parseFloat(position.contracts).toLocaleString("en-US"),
+                                value: Number.parseFloat(Number.parseFloat(position.contracts).toFixed(2)).toLocaleString("en-US"),
                                 inline: true
                             },
                             {
                                 name: "Entry Price",
-                                value: Number.parseFloat(position.entryPrice).toLocaleString("en-US"),
+                                value: Number.parseFloat(Number.parseFloat(position.entryPrice).toFixed(2)).toLocaleString("en-US"),
                                 inline: true
                             },
                             {
                                 name: "Unrealised PnL",
-                                value: Number.parseFloat(position.unrealizedPnl).toLocaleString("en-US"),
+                                value: Number.parseFloat(Number.parseFloat(position.unrealizedPnl).toFixed(2)).toLocaleString("en-US"),
                                 inline: true
                             },
                             {
                                 name: "Liquidation Price",
-                                value: Number.parseFloat(position.liquidationPrice).toLocaleString("en-US"),
+                                value: Number.parseFloat(Number.parseFloat(position.liquidationPrice).toFixed(2)).toLocaleString("en-US"),
                                 inline: true
                             },
                             { name: '\u200B', value: '\u200B' }
@@ -331,6 +354,8 @@ export default class CryptoPositionsBot {
     async loopFetch(userID: string, index: number) {
         let user = users.get(userID)
         if (user.ENABLED) {
+            user.IS_RUNNING = true;
+            users.set(user.ID, user);
             if (this.fetchTimeouts[userID]) {
                 clearTimeout(this.fetchTimeouts)
             }
@@ -343,10 +368,12 @@ export default class CryptoPositionsBot {
             }, index * 2000)
         } else {
             console.log('user ' + (user as User).TWITCH_CHANNEL + ' not Enabled, stopping loop.');
+            user.IS_RUNNING = false;
+            users.set(user.ID, user);
         }
     }
 
-    async start() {
+    async startAll() {
         try {
             await this.load();
             (users.all() as Array<any>).forEach(([id, user], index) => {
@@ -356,7 +383,50 @@ export default class CryptoPositionsBot {
             console.error(error);
             await this.restart();
         }
+    }
 
+    async start(twitchChannel: string) {
+        let user = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) === twitchChannel.toLowerCase());
+        if (user) {
+            user = user[1]
+            if (!user.IS_RUNNING) {
+                let userIndex = (users.all() as Array<any>).findIndex(([id, searchedUser], index) => {
+                    return searchedUser.ID === user.ID
+                });
+                if (userIndex !== -1) {
+                    this.loopFetch(user.ID, userIndex);
+                    user.IS_RUNNING = true;
+                    users.set(user.ID, user);
+                    console.log('started ' + twitchChannel + '.')
+                    return true;
+                } else {
+                    console.error('failed to start ' + twitchChannel + ' userIndex was -1')
+                }
+            } else {
+                console.error('failed to start ' + twitchChannel + ' is already running')
+            }
+        } else {
+            console.error('failed to start ' + twitchChannel + ' user not found')
+        }
+        return false;
+    }
+
+    async stop(twitchChannel: string) {
+        let user = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) === twitchChannel.toLowerCase());
+        if (user) {
+            user = user[1]
+            if (user.IS_RUNNING) {
+                user.IS_RUNNING = false;
+                users.set(user.ID, user);
+                console.log('stopped ' + twitchChannel + '.')
+                return true;
+            } else {
+                console.error('failed to stop ' + twitchChannel + ' is already stopped')
+            }
+        } else {
+            console.error('failed to stop ' + twitchChannel + ' user not found')
+        }
+        return false;
     }
 
     getMessageToEdit(userID: string): Promise<Message<boolean>> {
@@ -400,233 +470,66 @@ export default class CryptoPositionsBot {
         await this.discordClient.login(process.env.DISCORD_BOT_TOKEN);
     }
 
-    // getSignature(userID: string, timestamp: any, recvWindow: any, data: any) {
-
-    //     let user = users.get(userID);
-
-    //     return crypto.createHmac('sha256', user.BYBIT_API_SECRET!).update(timestamp + user.BYBIT_API_KEY! + recvWindow + data).digest('hex');
-
-    // }
-
-    // async bybitAuthenticatedHttpRequest(userID: string, endpoint: string, method: Method, data: any): Promise<any> {
-    //     let user = users.get(userID);
-    //     var recvWindow = 100000;
-    //     var timestamp = Date.now().toString();
-
-    //     const config = {
-    //         headers: {
-    //             'X-BAPI-SIGN-TYPE': '2',
-    //             'X-BAPI-SIGN': this.getSignature(userID, timestamp, recvWindow, data),
-    //             'X-BAPI-API-KEY': user.BYBIT_API_KEY,
-    //             'X-BAPI-TIMESTAMP': timestamp,
-    //             'X-BAPI-RECV-WINDOW': recvWindow.toString(),
-    //             'Content-Type': 'application/json; charset=utf-8'
-    //         },
-    //         method: method,
-    //         url: method === 'POST' ? process.env.BYBIT_REST_ENDPOINT + endpoint : process.env.BYBIT_REST_ENDPOINT + endpoint + (data.length > 0 ? '?' + data : '')
-    //     } as AxiosRequestConfig
-
-    //     if (data !== '') {
-    //         config.data = data
-    //     }
-
-    //     return axios(config)
-    // }
-
-    // async bybitHttpRequest(endpoint: string, method: Method, data: any): Promise<any> {
-    //     const config = {
-    //         method: method,
-    //         url: method === 'POST' ? process.env.BYBIT_REST_ENDPOINT + endpoint : process.env.BYBIT_REST_ENDPOINT + endpoint + (data.length > 0 ? '?' + data : '')
-    //     } as AxiosRequestConfig
-
-    //     if (data !== '') {
-    //         config.data = data
-    //     }
-
-    //     return axios(config)
-    // }
-
-    // fetchTickers(symbol?: string): Promise<void> {
-    //     return new Promise((resolve, reject) => {
-    //         console.log('fetching tickers');
-    //         Promise.allSettled(['linear', 'inverse'].map((category: string): Promise<void> => {
-    //             return new Promise((resolve, reject) => {
-
-    //                 this.bybitHttpRequest('/derivatives/v3/public/tickers', 'GET', `category=${category}`).then(response => {
-    //                     console.log(`fetched ${category} tickers`);
-    //                     response.data.result.list.forEach((ticker: any) => {
-    //                         let map = this.tickers.get(category);
-    //                         if (!map) {
-    //                             map = new Map<string, any>();
-    //                         }
-
-    //                         map.set(ticker.symbol, ticker)
-
-    //                         this.tickers.set(category, map)
-    //                     });
-
-    //                     resolve();
-
-    //                 }).catch(error => {
-    //                     console.error(error);
-    //                     reject(error);
-    //                 })
-    //             })
-    //         })).then(() => {
-    //             resolve()
-    //         })
-    //     })
-    // }
-
-    // fetchPositions(symbol: string, userID: string): Promise<void> {
-
-    //     return new Promise((resolve, reject) => {
-    //         let user = users.get(userID);
-    //         if (user) {
-    //             this.bybitAuthenticatedHttpRequest(user.ID, '/contract/v3/private/position/list', 'GET', `symbol=${symbol}`).then(response => {
-    //                 let userPositions = this.positions.get(user.ID);
-    //                 if (!userPositions) {
-    //                     this.positions.set(user.ID, new Map<any, any>())
-    //                 }
-    //                 if (response.data.result.list !== undefined) {
-    //                     if (response.data.result.list.length > 0) {
-    //                         let map = new Map<any, any>();
-    //                         response.data.result.list.forEach((position: any) => {
-    //                             if (Number.parseFloat(position.size) > 0) {
-    //                                 map.set(position.side, position)
-    //                                 this.positions.get(user.ID).set(position.symbol, map)
-    //                             }
-    //                         });
-    //                     }
-    //                 }
-    //                 resolve();
-    //             }).catch(error => {
-    //                 reject(error);
-    //             })
-    //         } else {
-    //             console.error('user not found ' + userID)
-    //             reject()
-    //         }
-
-    //     })
-
-
-
-    // }
-
-    // fetchOrders(symbol: string, userID: string): Promise<void> {
-    //     return new Promise((resolve, reject) => {
-    //         let user = users.get(userID);
-    //         if (user) {
-    //             this.bybitAuthenticatedHttpRequest(user.ID, '/contract/v3/private/order/list', 'GET', `symbol=${symbol}`).then(response => {
-    //                 let userOrders = this.orders.get(user.ID);
-    //                 if (!userOrders) {
-    //                     this.orders.set(user.ID, new Map<any, any>())
-    //                 }
-    //                 if (response.data.result.list !== undefined) {
-    //                     let map = new Map<any, any>();
-    //                     if (response.data.result.list.length > 0)
-    //                         response.data.result.list.forEach((order: any) => {
-    //                             if (Number.parseFloat(order.size) > 0) {
-    //                                 map.set(order.orderId, order)
-    //                                 this.orders.get(user.ID).set(order.symbol, map)
-    //                             }
-    //                         });
-    //                 }
-    //                 resolve();
-    //             }).catch(error => {
-    //                 reject(error);
-    //             })
-    //         } else {
-    //             console.error('user not found ' + userID)
-    //             reject()
-    //         }
-    //     })
-    // }
-
-    // async fetchPositionsAndOrders(userID: string) {
-    //     let user = users.get(userID);
-    //     if (user) {
-    //         await Promise.allSettled([...this.tickers.keys()].map((category): Promise<void> => {
-    //             return new Promise((resolve, reject) => {
-    //                 console.log('fetching positions & orders for ' + `${user.TWITCH_CHANNEL} ${category} tickers`);
-
-    //                 Promise.allSettled([...this.tickers.get(category)?.values()!].map((ticker: any, index: number): Promise<void> => {
-    //                     return new Promise((resolve, reject) => {
-    //                         setTimeout(() => {
-    //                             Promise.allSettled([this.fetchOrders(ticker.symbol, user.ID), this.fetchPositions(ticker.symbol, user.ID)]).then(() => {
-    //                                 resolve()
-    //                             })
-    //                         }, 400 * index)
-    //                     })
-    //                 })).then(() => {
-    //                     console.log(`finished fetching ${user.TWITCH_CHANNEL} ${category} positions & orders`);
-    //                     resolve();
-    //                 })
-    //             })
-    //         }));
-    //         let userFromDB = users.get(user.ID)
-    //         userFromDB.LAST_UPDATE = new Date().toUTCString()
-    //         users.set(userFromDB.ID, userFromDB)
-    //         return;
-    //     } else {
-    //         console.error('user not found ' + userID)
-    //         return;
-    //     }
-    // }
-
     async fetchPositionsCCXT(userID: string) {
         let user = users.get(userID);
         if (user) {
-            if ((user as User).EXCHANGE_KEYS.length > 0) {
+            if (user.ENABLED) {
+                if ((user as User).EXCHANGE_KEYS.length > 0) {
 
-                let userPositions = this.positions.get(user.ID);
-                if (!userPositions) {
-                    this.positions.set(user.ID, new Map<any, any>())
-                }
-
-
-                await Promise.allSettled((user as User).EXCHANGE_KEYS.map(async exchangeKey => {
-                    let exchange: ccxt.Exchange;
-
-                    let userExchangePositions = this.positions.get(user.ID).get(exchangeKey.EXCHANGE_ID);
-                    if (!userExchangePositions) {
-                        let userPositions = this.positions.get(user.ID);
-                        let updatedUserPositions = userPositions.set(exchangeKey.EXCHANGE_ID, new Array<any>());
-                        this.positions.set(user.ID, updatedUserPositions);
+                    let userPositions = this.positions.get(user.ID);
+                    if (!userPositions) {
+                        this.positions.set(user.ID, new Map<any, any>())
                     }
-
-                    exchange = new ccxt[exchangeKey.EXCHANGE_ID]();
-
-                    exchange.apiKey = exchangeKey.API_KEY;
-                    exchange.secret = exchangeKey.API_SECRET;
-
-                    if (exchange.hasPrivateAPI) {
-                        try {
-                            let fetchedPositions = await exchange.fetchPositions();
+    
+    
+                    await Promise.allSettled((user as User).EXCHANGE_KEYS.map(async exchangeKey => {
+                        let exchange: ccxt.Exchange;
+    
+                        let userExchangePositions = this.positions.get(user.ID).get(exchangeKey.EXCHANGE_ID);
+                        if (!userExchangePositions) {
                             let userPositions = this.positions.get(user.ID);
-                            let activePositions = [];
-                            await Promise.allSettled(fetchedPositions.map(async (position) => {
-                                if (Number.parseFloat(position.contracts) > 0) {
-                                    activePositions.push(position)
-                                }
-                            }));
-                            if (activePositions.length > 0) {
-                                userPositions = this.positions.get(user.ID);
-                                let updatedUserPositions = userPositions.set(exchangeKey.EXCHANGE_ID, activePositions)
-                                this.positions.set(user.ID, updatedUserPositions)
-                            }
-                            console.log('user ' + (user as User).TWITCH_CHANNEL + ' has ' + activePositions.length + ' active positions.');
-                        } catch (error) {
-                            console.error(error);
+                            let updatedUserPositions = userPositions.set(exchangeKey.EXCHANGE_ID, new Array<any>());
+                            this.positions.set(user.ID, updatedUserPositions);
                         }
-                    } else {
-                        console.error('exchange has no private API');
-                    }
-                }));
+    
+                        exchange = new ccxt[exchangeKey.EXCHANGE_ID]();
+    
+                        exchange.apiKey = exchangeKey.API_KEY;
+                        exchange.secret = exchangeKey.API_SECRET;
+    
+                        if (exchange.hasPrivateAPI) {
+                            try {
+                                let fetchedPositions = await exchange.fetchPositions();
+                                let userPositions = this.positions.get(user.ID);
+                                let activePositions = [];
+                                await Promise.allSettled(fetchedPositions.map(async (position) => {
+                                    if (Number.parseFloat(position.contracts) > 0) {
+                                        activePositions.push(position)
+                                    }
+                                }));
+                                if (activePositions.length > 0) {
+                                    userPositions = this.positions.get(user.ID);
+                                    let updatedUserPositions = userPositions.set(exchangeKey.EXCHANGE_ID, activePositions)
+                                    this.positions.set(user.ID, updatedUserPositions)
+                                }
+                                console.log('user ' + (user as User).TWITCH_CHANNEL + ' has ' + activePositions.length + ' active positions.');
+                                user = users.get(user.ID);
+                                user.LAST_UPDATE = new Date().toUTCString();
+                                users.set(user.ID, user)
+                            } catch (error) {
+                                console.error(error);
+                            }
+                        } else {
+                            console.error('exchange has no private API');
+                        }
+                    }));
+                } else {
+                    console.log('user has no exchange keys ' + (user as User).TWITCH_CHANNEL);
+                }
             } else {
-                console.log('user has no exchange keys ' + (user as User).TWITCH_CHANNEL);
+                console.log('user not enabled ' + user.ID)
             }
+            
         } else {
             console.error('no user found ' + userID)
         }
@@ -679,109 +582,20 @@ export default class CryptoPositionsBot {
 
     }
 
-
-    // async loadBybitWebsocket() {
-
-    //     const expires = new Date().getTime() + 100000;
-    //     const signature = crypto.createHmac("sha256", process.env.BYBIT_API_SECRET!).update("GET/realtime" + expires).digest("hex");
-    //     const auth_payload = {
-    //         op: "auth",
-    //         args: [process.env.BYBIT_API_KEY, expires.toFixed(0), signature],
-    //     };
-
-    //     this.bybitWebsocket = new WebSocket(process.env.BYBIT_WS_ENDPOINT! + `?api_key=${process.env.BYBIT_API_KEY}&expires=${expires}&signature=${signature}`);
-    //     this.bybitWebsocket.on('open', () => {
-    //         console.log('Bybit WebSocket Client Connected');
-
-    //         this.bybitWebsocket.send(JSON.stringify(auth_payload));
-
-    //         // ping every 30 seconds
-    //         setInterval(() => {
-    //             this.bybitWebsocket.ping()
-    //         }, 20000);
-
-    //         // send ping
-    //         this.bybitWebsocket.ping();
-
-    //         // subscribe to order
-    //         this.bybitWebsocket.send(JSON.stringify({"op": "subscribe", "args": ['user.position.contractAccount']}));
-    //     });
-
-    //     // this.bybitWebsocket.on('message', async (data: any) => {
-    //     //     let messageData = JSON.parse(Buffer.from(data).toString()) as any;
-
-    //     //     // this.discordClient.channels.cache.forEach((channel, key) => {
-    //     //     //     console.log((channel as TextChannel).name, key);
-    //     //     // });
-
-    //     //     let formattedMessage = ''
-
-    //     //     if (messageData.topic === 'user.position.contractAccount') {
-
-    //     //         messageData.data.forEach((position: any) => {
-    //     //             let map = this.positions.get(position.symbol);
-    //     //             if (!map) {
-    //     //                 map = new Map<any, any>();
-    //     //             }
-    //     //             map.set(position.side, position)
-    //     //             this.positions.set(position.symbol, map)
-    //     //         })
-
-    //     //         formattedMessage += 'Position Update:\n\n';
-    //     //         messageData.data.forEach((position: any) => {
-    //     //             formattedMessage += `${position.side === 'Buy' ? '🟩 LONG' : position.side === 'Sell' ? '🟥 SHORT' : ''} ${position.symbol}\t\t${position.size} @ ${position.entryPrice}\t\tSL @ ${position.stopLoss}\t\tTP @ ${position.takeProfit}\n`
-    //     //         })
-
-    //     //     } else if (messageData.topic === 'user.order.contractAccount') {
-
-    //     //     } else if (messageData.topic === 'user.exection.contractAccount') {
-
-    //     //     } else if (messageData.topic === 'user.wallet.contractAccount') {
-
-    //     //     }
-
-    //     //     if (formattedMessage.length > 0)
-    //     //         (this.discordClient.channels.cache.get(process.env.DISCORD_CHANNEL_ID!)! as TextChannel).send(formattedMessage);
-
-    //     // });
-
-    //     this.bybitWebsocket.on('ping', (data: any, flags: any) => {
-    //         console.log("ping received");
-
-    //     });
-
-    //     this.bybitWebsocket.on('pong', (data: any, flags: any) => {
-    //         console.log("pong received");
-
-
-    // const used = process.memoryUsage();
-    // for (let key in used) {
-    //     console.log(`${key} ${Math.round(used[key] / 1024 / 1024 * 100) / 100} MB`);
-    // }
-
-    //         // writeHeapSnapshot()
-
-    //     });
-
-    //     this.bybitWebsocket.on('close', () => {
-    //         this.restart();
-    //     });
-    // }
-
     async addUser(
-        exchangeKeys: Array<ExchangeKey>, 
-        discord_channel_id: string, 
-        twitch_channel: string, 
-        discord_enabled: boolean = true, 
-        twitch_enabled: boolean = true, 
-        twitch_timeout_enabled: boolean = true, 
+        exchangeKeys: Array<ExchangeKey>,
+        discord_channel_id: string,
+        twitch_channel: string,
+        discord_enabled: boolean = true,
+        twitch_enabled: boolean = true,
+        twitch_timeout_enabled: boolean = true,
         twitch_timeout_expire: number = 5,
         enabled: boolean = false
     ) {
         if (!twitch_channel.startsWith("#")) {
             twitch_channel = '#' + twitch_channel
         }
-        if (!users.all().some(([id, user]) => user.TWITCH_CHANNEL === twitch_channel)) {
+        if (!users.all().some(([id, user]) => user.TWITCH_CHANNEL.toLowerCase() === twitch_channel.toLowerCase())) {
             let userID = uuidv4();
             users.set(userID, {
                 ID: userID,
@@ -793,61 +607,176 @@ export default class CryptoPositionsBot {
                 DISCORD_ENABLED: discord_enabled,
                 DISCORD_CHANNEL: discord_channel_id,
                 DISCORD_MESSAGE: null,
-                ENABLED: enabled
+                LAST_UPDATE: new Date().toUTCString(),
+                ENABLED: enabled,
+                IS_RUNNING: false
             } as User);
             console.log('added user ' + twitch_channel)
             return userID;
         } else {
+            console.log('user ' + twitch_channel + ' already exists');
             return null;
         }
     }
 
-    async removeUser(userID: string) {
-        if (users.all().some(([id, user]) => id === userID)) {
-            users.delete(userID)
-            console.log('removed user ' + userID)
+    async removeUser(twitchChannel: string) {
+        let user = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) === twitchChannel.toLowerCase());
+        if (user) {
+            user = user[1]
+            users.delete(user.ID)
+            console.log('removed user ' + user.ID)
             return true;
         } else {
-            return false;
+            console.error('failed to remove ' + twitchChannel + ' user not found')
         }
+        return false;
+        
     }
 
-    async disableUser(userID: string) {
-        let user = users.get(userID)
+    async disableUser(twitchChannel: string) {
+        let user = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) === twitchChannel.toLowerCase());
         if (user) {
+            user = user[1]
             user.ENABLED = false;
-            users.set(userID, user)
+            users.set(user.ID, user)
             console.log('user disabled ' + (user as User).TWITCH_CHANNEL)
             return true;
         } else {
-            return false;
+            console.error('failed to disable ' + twitchChannel + ' user not found')
         }
+        return false;
     }
 
-    async enableUser(userID: string) {
-        let user = users.get(userID)
+    async enableUser(twitchChannel: string) {
+        let user = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) === twitchChannel.toLowerCase());
         if (user) {
+            user = user[1]
             user.ENABLED = true;
-            users.set(userID, user)
+            users.set(user.ID, user)
             console.log('user enabled ' + (user as User).TWITCH_CHANNEL)
             return true;
         } else {
-            return false;
+            console.error('failed to enable ' + twitchChannel + ' user not found')
         }
+        return false;
     }
 
-    async connectToTwitchChannel(userID: string) {
-        let user = users.get(userID)
-        if (user && user.ENABLED && user.TWITCH_ENABLED && !this.twitchBot.channels.some(channel => channel.toLowerCase() === user.TWITCH_CHANNEL.toLowerCase())) {
-            this.twitchBot.join(user.TWITCH_CHANNEL.toLowerCase())
-            console.log('connected to twitch channel ' + (user as User).TWITCH_CHANNEL)
+    async updateUserExchangeKeys(twitchChannel: string, exchangeKeys: Array<ExchangeKey>) {
+        let user = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) === twitchChannel.toLowerCase());
+        if (user) {
+            user = user[1]
+            let updatedExchangeKeys = [];
+            user.EXCHANGE_KEYS.forEach((existingExchangeKey: ExchangeKey) => {
+                let updated = exchangeKeys.find(updatedExchangeKey => updatedExchangeKey.KEY_ID === existingExchangeKey.KEY_ID);
+                if (updated) {
+                    if (!updated.API_KEY.startsWith("*")) {
+                        existingExchangeKey.API_KEY = updated.API_KEY;
+                    }
+                    if (!updated.API_SECRET.startsWith("*")) {
+                        existingExchangeKey.API_SECRET = updated.API_SECRET;
+                    }
+                    if (updated.DESCRIPTION !== existingExchangeKey.DESCRIPTION) {
+                        existingExchangeKey.DESCRIPTION = updated.DESCRIPTION;
+                    }
+                    updatedExchangeKeys.push(existingExchangeKey);
+                }
+            });
+            exchangeKeys.forEach(updatedExchangeKey => {
+                if (!user.EXCHANGE_KEYS.some((currentExchangeKey: ExchangeKey) => currentExchangeKey.KEY_ID === updatedExchangeKey.KEY_ID)) {
+                    if ((!updatedExchangeKey.API_KEY.startsWith("*") && !updatedExchangeKey.API_SECRET.startsWith("*"))) {
+                        updatedExchangeKeys.push(updatedExchangeKey)
+                    }
+                }
+            });
+            user.EXCHANGE_KEYS = updatedExchangeKeys;
+            users.set(user.ID, user);
+            console.log('updated ' + user.TWITCH_CHANNEL + '\'s exchange keys info');
             return true;
         } else {
-            return false;
+            console.error('failed to update exhange keys for ' + twitchChannel + ' user not found')
+        }
+        return false;
+    }
+
+    async updateUserDiscordInfo(twitchChannel: string, discordInfo: { DISCORD_MESSAGE: string, DISCORD_CHANNEL: string, DISCORD_ENABLED: boolean }) {
+        let user = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) === twitchChannel.toLowerCase());
+        if (user) {
+            user = user[1]
+            user.DISCORD_CHANNEL = discordInfo.DISCORD_CHANNEL;
+            user.DISCORD_MESSAGE = discordInfo.DISCORD_MESSAGE;
+            user.DISCORD_ENABLED = discordInfo.DISCORD_ENABLED;
+            users.set(user.ID, user);
+            console.log('updated ' + user.TWITCH_CHANNEL + '\'s discord info');
+            return true;
+        } else {
+            console.error('failed to update discord info for ' + twitchChannel + ' user not found')
+        }
+        return false;
+    }
+
+    async updateUserTwitchInfo(twitchChannel: string, twitchInfo: { TWITCH_ENABLED: boolean, TWITCH_TIMEOUT: boolean, TWITCH_TIMEOUT_EXPIRE: number }) {
+        let user = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) === twitchChannel.toLowerCase());
+        if (user) {
+            user = user[1]
+            user.TWITCH_ENABLED = twitchInfo.TWITCH_ENABLED;
+            user.TWITCH_TIMEOUT = twitchInfo.TWITCH_TIMEOUT;
+            user.TWITCH_TIMEOUT_EXPIRE = twitchInfo.TWITCH_TIMEOUT_EXPIRE;
+            users.set(user.ID, user);
+            console.log('updated ' + user.TWITCH_CHANNEL + '\'s twitch info');
+            return true;
+        } else {
+            console.error('failed to update twitch info for ' + twitchChannel + ' user not found')
+        }
+        return false;
+    }
+
+    async updateUserEnabled(twitchChannel: string, enabled: boolean) {
+        let user = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) === twitchChannel.toLowerCase());
+        if (user) {
+            user = user[1]
+            user.ENABLED = enabled;
+            users.set(user.ID, user);
+            console.log('updated' + user.TWITCH_CHANNEL + '\'s enabled: ' + enabled);
+            return true;
+        } else {
+            console.error('failed to update user enabled state for ' + twitchChannel + ' user not found')
+        }
+        return false;
+    }
+
+    async connectToTwitchChannel(twitchChannel: string) {
+        let user = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) === twitchChannel.toLowerCase());
+        if (user) {
+            user = user[1]
+            if (user.ENABLED && user.TWITCH_ENABLED && !this.twitchBot.channels.some(channel => channel.toLowerCase() === user.TWITCH_CHANNEL.toLowerCase())) {
+                this.twitchBot.join(user.TWITCH_CHANNEL.toLowerCase())
+                console.log('connected to twitch channel ' + (user as User).TWITCH_CHANNEL)
+                return true;
+            }
+        }
+        return false;
+    }
+
+    async getUserInfo(twitchChannel: string) {
+        let user = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) === twitchChannel.toLowerCase());
+        if (user) {
+            user = user[1]
+            user.EXCHANGE_KEYS = (user as User).EXCHANGE_KEYS.map(key => ({ EXCHANGE_ID: key.EXCHANGE_ID, API_KEY: new Array(key.API_KEY.length + 1).join("*"), API_SECRET: new Array(key.API_SECRET.length + 1).join("*"), DESCRIPTION: key.DESCRIPTION } as ExchangeKey));
+            return user;
+        } else {
+            try {
+                let userID = await this.addUser([], '', '#'+twitchChannel, false, false, true, 5, false)
+                if (userID !== null) {
+                    let user = users.get(userID)
+                    if (user) {
+                        return user;
+                    } else {
+                        return null;
+                    }
+                }
+            } catch(error) {
+                return error;
+            }
         }
     }
 }
-
-// const bot = new BybitPositionBot();
-
-// bot.start();

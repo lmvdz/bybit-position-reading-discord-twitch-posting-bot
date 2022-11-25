@@ -2,27 +2,34 @@ import express from 'express'
 import { config } from 'dotenv'
 import CryptoPositionsBot from '../CryptoPositionsBot'
 import bodyParser from 'body-parser'
+import axios from 'axios'
+import cors from 'cors'
 
 config()
 
 const bot = new CryptoPositionsBot();
 
-bot.addUser([{'API_KEY': 'M4WjFXob7u3jeGgTyg', 'API_SECRET': 'wijY1CoUYf6KJwPNwy5eorTIvIXFNp7pjReC', 'EXCHANGE_ID': 'bybit'}], '1044457746680004728', '#Lmvdzande', true, true, true, 5, true).then((userID) => {
-    bot.enableUser(userID);
-    bot.connectToTwitchChannel(userID);
+// bot.addUser([{'KEY_ID': '09bd38bb-5317-450a-900b-ac72ee181565', 'API_KEY': 'M4WjFXob7u3jeGgTyg', 'API_SECRET': 'wijY1CoUYf6KJwPNwy5eorTIvIXFNp7pjReC', 'EXCHANGE_ID': 'bybit'}], '1044457746680004728', '#Lmvdzande', true, true, true, 5, true).then((userID) => {
+//     if (userID !== null) {
+//         bot.enableUser(userID);
+//         bot.connectToTwitchChannel(userID);
+//     }
+// });
+
+bot.addUser([{'KEY_ID': '30ba7142-3c04-4720-9577-8b1c656bb6ab', 'API_KEY': 'Dfv0YiiuJuz7Y5aIp1', 'API_SECRET': '3teMGGWmcARkm5y9ryOehwx6mWqqqQm6J37H', 'EXCHANGE_ID': 'bybit', 'DESCRIPTION': 'Challange Account'}], '1044690741424836732', '#bearkingeth', true, true, true, 5, true).then((userID) => {
+    if (userID !== null) {
+        bot.enableUser(userID);
+        bot.connectToTwitchChannel(userID);
+    }
 });
 
-bot.addUser([{'API_KEY': 'Dfv0YiiuJuz7Y5aIp1', 'API_SECRET': '3teMGGWmcARkm5y9ryOehwx6mWqqqQm6J37H', 'EXCHANGE_ID': 'bybit'}], '1044690741424836732', '#bearkingeth', true, true, true, 5, true).then((userID) => {
-    bot.enableUser(userID);
-    bot.connectToTwitchChannel(userID);
-});
-
-bot.start();
+bot.startAll();
 
 const app = express();
+app.use(cors())
 app.use(bodyParser.json())
 
-app.post("/addUser", (req, res) => {
+app.post("/addUser", cors(), (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     if (ip === '::1') {
         if (req.body !== undefined) {
@@ -30,17 +37,24 @@ app.post("/addUser", (req, res) => {
                 res.send('missing exchangeKeys')
             } else if (req.body.discord_channel_id === undefined) {
                 res.send('missing discord_channel_id')
-            } else if (req.body.twitch_channel === undefined) {
-                res.send('missing twitch_channel')
+            } else if (req.body.access_token === undefined) {
+                res.send('missing access_token')
             } else {
-                bot.addUser(req.body.exchangeKeys, req.body.discord_channel_id, req.body.twitch_channel).then(() => {
-                    res.send(true);
+                getTwitchUserInfo(req.body.access_token).then((data) => {
+                    bot.addUser(req.body.exchangeKeys, req.body.discord_channel_id, (data as any).display_name).then(() => {
+                        res.send(true);
+                    }).catch(error => {
+                        console.error(error);
+                        res.send(false)
+                    })
                 }).catch(error => {
-                    res.send(false)
+                    console.error(error);
+                    res.send(false);
                 })
+                
             }
         } else {
-            res.send('missing bybit_api_key, bybit_api_secret, discord_channel_id, twitch_channel')
+            res.send('missing exchange_keys, discord_channel_id, access_token')
         }
         
     } else {
@@ -49,84 +63,330 @@ app.post("/addUser", (req, res) => {
     
 })
 
-app.post('/removeUser', (req, res) => {
+app.post('/removeUser', cors(), (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     if (ip === '::1') {
         if (req.body !== undefined) {
-            if (req.body.userID === undefined) {
-                res.send('missing userID')
+            if (req.body.access_token === undefined) {
+                res.send('missing access_token')
             } else {
-                bot.removeUser(req.body.userID).then(() => {
-                    res.send(true);
+                getTwitchUserInfo(req.body.access_token).then((data) => {
+                    bot.removeUser((data as any).display_name).then(() => {
+                        res.send(true);
+                    }).catch(error => {
+                        console.error(error);
+                        res.send(false)
+                    })
                 }).catch(error => {
-                    res.send(false)
+                    console.error(error);
+                    res.send(false);
                 })
             }
         } else {
-            res.send('missing userID')
+            res.send('missing access_token')
         }
     } else {
         res.status(300).send("Access Denied")
     }
 })
 
-app.post('/enableUser', (req, res) => {
+app.post('/enableUser', cors(), (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     if (ip === '::1') {
         if (req.body !== undefined) {
-            if (req.body.userID === undefined) {
-                res.send('missing userID')
+            if (req.body.access_token === undefined) {
+                res.send('missing access_token')
             } else {
-                bot.enableUser(req.body.userID).then(() => {
-                    res.send(true);
+                getTwitchUserInfo(req.body.access_token).then((data) => {
+                    bot.enableUser((data as any).display_name).then(() => {
+                        res.send(true);
+                    }).catch(error => {
+                        console.error(error);
+                        res.send(false)
+                    })
                 }).catch(error => {
-                    res.send(false)
+                    console.error(error);
+                    res.send(false);
                 })
             }
         } else {
-            res.send('missing userID')
+            res.send('missing access_token')
         }
     } else {
         res.status(300).send(ip +  " Access Denied")
     }
 })
 
-app.post('/disableUser', (req, res) => {
+app.post('/disableUser', cors(), (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     if (ip === '::1') {
         if (req.body !== undefined) {
-            if (req.body.userID === undefined) {
-                res.send('missing userID')
+            if (req.body.access_token === undefined) {
+                res.send('missing access_token')
             } else {
-                bot.disableUser(req.body.userID).then(() => {
-                    res.send(true);
+                getTwitchUserInfo(req.body.access_token).then((data) => {
+                    bot.disableUser((data as any).display_name).then(() => {
+                        res.send(true);
+                    }).catch(error => {
+                        console.error(error);
+                        res.send(false)
+                    })
                 }).catch(error => {
-                    res.send(false)
+                    console.error(error);
+                    res.send(false);
                 })
             }
         } else {
-            res.send('missing userID')
+            res.send('missing access_token')
         }
     } else {
         res.status(300).send(ip +  " Access Denied")
     }
 })
 
-app.post('/connectToTwitchChannel', (req, res) => {
+app.post('/connectToTwitchChannel', cors(), (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     if (ip === '::1') {
         if (req.body !== undefined) {
-            if (req.body.userID === undefined) {
-                res.send('missing userID')
+            if (req.body.access_token === undefined) {
+                res.send('missing access_token')
             } else {
-                bot.connectToTwitchChannel(req.body.userID).then(() => {
-                    res.send(true);
+                getTwitchUserInfo(req.body.access_token).then((data) => {
+                    bot.connectToTwitchChannel((data as any).display_name).then(() => {
+                        res.send(true);
+                    }).catch(error => {
+                        console.error(error);
+                        res.send(false)
+                    })
                 }).catch(error => {
-                    res.send(false)
+                    console.error(error);
+                    res.send(false);
                 })
             }
         } else {
-            res.send('missing userID')
+            res.send('missing access_token')
+        }
+    } else {
+        res.status(300).send(ip +  " Access Denied")
+    }
+})
+
+app.get('/userInfo', cors(), (req, res) => {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    if (ip === '::1' || ip === '72.110.11.91') {
+        if (req.query !== undefined) {
+            if (req.query.access_token === undefined) {
+                res.send('missing access_token')
+            } else {
+                getTwitchUserInfo(req.query.access_token).then((data) => {
+                    bot.getUserInfo((data as any).display_name).then((keys) => {
+                        res.send(keys);
+                    }).catch(error => {
+                        console.error(error);
+                        res.send(false)
+                    })
+                }).catch(error => {
+                    console.error(error);
+                    res.send(false);
+                })
+            }
+        } else {
+            res.send('missing access_token')
+        }
+    } else {
+        res.status(300).send(ip +  " Access Denied")
+    }
+})
+
+app.post('/userExchangeKeys', cors(), (req, res) => {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    if (ip === '::1' || ip === '72.110.11.91') {
+        if (req.body !== undefined) {
+            if (req.body.access_token === undefined) {
+                res.send('missing access_token')
+            } else {
+                getTwitchUserInfo(req.body.access_token).then((data) => {
+                    bot.updateUserExchangeKeys((data as any).display_name, req.body.exchangeKeys).then((response) => {
+                        res.send(response);
+                    }).catch(error => {
+                        console.error(error);
+                        res.status(500).send(error);
+                    })
+                }).catch(error => {
+                    console.error(error);
+                    res.status(500).send(error);
+                })
+            }
+        } else {
+            res.send('missing access_token')
+        }
+    } else {
+        res.status(300).send(ip +  " Access Denied")
+    }
+})
+
+app.post('/userDiscordInfo', cors(), (req, res) => {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    if (ip === '::1' || ip === '72.110.11.91') {
+        if (req.body !== undefined) {
+            if (req.body.access_token === undefined) {
+                res.send('missing access_token')
+            } else {
+                getTwitchUserInfo(req.body.access_token).then((data) => {
+                    bot.updateUserDiscordInfo((data as any).display_name, req.body.discordInfo).then((response) => {
+                        res.send(response);
+                    }).catch(error => {
+                        console.error(error);
+                        res.status(500).send(error);
+                    })
+                }).catch(error => {
+                    console.error(error);
+                    res.status(500).send(error);
+                })
+            }
+        } else {
+            res.send('missing access_token')
+        }
+    } else {
+        res.status(300).send(ip +  " Access Denied")
+    }
+})
+
+app.post('/userTwitchInfo', cors(), (req, res) => {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    if (ip === '::1' || ip === '72.110.11.91') {
+        if (req.body !== undefined) {
+            if (req.body.access_token === undefined) {
+                res.send('missing access_token')
+            } else {
+                getTwitchUserInfo(req.body.access_token).then((data) => {
+                    bot.updateUserTwitchInfo((data as any).display_name, req.body.twitchInfo).then((response) => {
+                        res.send(response);
+                    }).catch(error => {
+                        console.error(error);
+                        res.status(500).send(error);
+                    })
+                }).catch(error => {
+                    console.error(error);
+                    res.status(500).send(error);
+                })
+            }
+        } else {
+            res.send('missing access_token')
+        }
+    } else {
+        res.status(300).send(ip +  " Access Denied")
+    }
+})
+
+app.post('/start', cors(), (req, res) => {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    if (ip === '::1' || ip === '72.110.11.91') {
+        if (req.body !== undefined) {
+            if (req.body.access_token === undefined) {
+                res.send('missing access_token')
+            } else {
+                getTwitchUserInfo(req.body.access_token).then((data) => {
+                    bot.start((data as any).display_name).then((response) => {
+                        res.send(response);
+                    }).catch(error => {
+                        console.error(error);
+                        res.status(500).send(error);
+                    })
+                }).catch(error => {
+                    console.error(error);
+                    res.status(500).send(error);
+                })
+            }
+        } else {
+            res.send('missing access_token')
+        }
+    } else {
+        res.status(300).send(ip +  " Access Denied")
+    }
+})
+
+app.post('/stop', cors(), (req, res) => {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    if (ip === '::1' || ip === '72.110.11.91') {
+        if (req.body !== undefined) {
+            if (req.body.access_token === undefined) {
+                res.send('missing access_token')
+            } else {
+                getTwitchUserInfo(req.body.access_token).then((data) => {
+                    bot.stop((data as any).display_name).then((response) => {
+                        res.send(response);
+                    }).catch(error => {
+                        console.error(error);
+                        res.status(500).send(error);
+                    })
+                }).catch(error => {
+                    console.error(error);
+                    res.status(500).send(error);
+                })
+            }
+        } else {
+            res.send('missing access_token')
+        }
+    } else {
+        res.status(300).send(ip +  " Access Denied")
+    }
+})
+
+app.post('/userEnabled', cors(), (req, res) => {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    if (ip === '::1' || ip === '72.110.11.91') {
+        if (req.body !== undefined) {
+            if (req.body.access_token === undefined) {
+                res.send('missing access_token')
+            } else {
+                getTwitchUserInfo(req.body.access_token).then((data) => {
+                    bot.updateUserEnabled((data as any).display_name, req.body.enabled).then((response) => {
+                        res.send(response);
+                    }).catch(error => {
+                        console.error(error);
+                        res.status(500).send(error);
+                    })
+                }).catch(error => {
+                    console.error(error);
+                    res.status(500).send(error);
+                })
+            }
+        } else {
+            res.send('missing access_token')
+        }
+    } else {
+        res.status(300).send(ip +  " Access Denied")
+    }
+})
+
+const getTwitchUserInfo = (access_token: string) => {
+    return new Promise((resolve, reject) => {
+        axios.get('https://api.twitch.tv/helix/users', { headers: { "Authorization": `Bearer ${access_token}`, "Client-Id": process.env.TWITCH_APP_CLIENT_ID}}).then((response) => {
+            resolve(response.data.data[0])
+        }).catch(error => {
+            console.error(error);
+            reject(error)
+        })
+    })
+}
+
+app.get('/twitchUserInfo', cors(), (req, res) => {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    if (ip === '::1' || ip === '72.110.11.91') {
+        if (req.query !== undefined) {
+            if (req.query.access_token === undefined) {
+                res.send('missing access_token')
+            } else {
+                getTwitchUserInfo(req.query.access_token).then((data) => {
+                    res.send(data)
+                }).catch(error => {
+                    console.error(error);
+                    res.status(500).send(error);
+                })
+            }
+        } else {
+            res.send('missing access_token')
         }
     } else {
         res.status(300).send(ip +  " Access Denied")
