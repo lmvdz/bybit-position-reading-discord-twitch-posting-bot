@@ -118,7 +118,7 @@
           <v-row class="d-flex align-top justify-center"
             v-if="state.twitchUserInfo !== null && state.userInfo !== null">
             <v-col cols="auto">
-              <v-btn :icon="!state.userInfo.IS_RUNNING ? 'mdi-start' : 'mdi-stop'" :disabled="!state.enabled" :color="state.userInfo.IS_RUNNING ? 'error' :'success'" v-if="state.twitchUserInfo !== null" @click="() => {
+              <v-btn :icon="!state.userInfo.IS_RUNNING ? 'mdi-play' : 'mdi-stop'" :disabled="!state.enabled" :color="state.userInfo.IS_RUNNING ? 'error' :'success'" v-if="state.twitchUserInfo !== null" @click="() => {
                 if (state.userInfo.IS_RUNNING) {
                   stopDialog = true;
                 } else {
@@ -279,9 +279,11 @@ const log = (...args: any) => {
 }
 
 const connectTwitch = () => {
-  window.open(`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=z5o8ef6nmef6wbxm2h6ry6xfatvqud&redirect_uri=https://www.cryptopositionsbot.com/&scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls&state=c3ab8aa609ea11e793ae92361f002671`)
-  // window.location.href = (`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=z5o8ef6nmef6wbxm2h6ry6xfatvqud&redirect_uri=http://localhost:3000/&scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls&state=c3ab8aa609ea11e793ae92361f002671`)
-
+  if (window.location.hostname === 'www.cryptopositionsbot.com') {
+    window.open(`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=z5o8ef6nmef6wbxm2h6ry6xfatvqud&redirect_uri=https://www.cryptopositionsbot.com/&scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls&state=c3ab8aa609ea11e793ae92361f002671`)
+  } else {
+    window.location.href = (`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=z5o8ef6nmef6wbxm2h6ry6xfatvqud&redirect_uri=http://localhost:3000/&scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls&state=c3ab8aa609ea11e793ae92361f002671`) 
+  }
 }
 onMounted(() => {
   if (document.location.hash) {
