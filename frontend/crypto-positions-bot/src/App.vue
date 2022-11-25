@@ -279,8 +279,8 @@ const log = (...args: any) => {
 }
 
 const connectTwitch = () => {
-  // window.open(`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=z5o8ef6nmef6wbxm2h6ry6xfatvqud&redirect_uri=https://www.cryptopositionsbot.com/&scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls&state=c3ab8aa609ea11e793ae92361f002671`)
-  window.location.href = (`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=z5o8ef6nmef6wbxm2h6ry6xfatvqud&redirect_uri=http://localhost:3000/&scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls&state=c3ab8aa609ea11e793ae92361f002671`)
+  window.open(`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=z5o8ef6nmef6wbxm2h6ry6xfatvqud&redirect_uri=https://www.cryptopositionsbot.com/&scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls&state=c3ab8aa609ea11e793ae92361f002671`)
+  // window.location.href = (`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=z5o8ef6nmef6wbxm2h6ry6xfatvqud&redirect_uri=http://localhost:3000/&scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls&state=c3ab8aa609ea11e793ae92361f002671`)
 
 }
 onMounted(() => {
@@ -446,6 +446,7 @@ const deleteUser = () : Promise<void> => {
       access_token: state.twitchAccessToken.access_token
     }
     axios.post('https://bot.cryptopositionsbot.com/removeUser', data).then((response) => {
+      state.deleteDialog = false;
       logout()
       resolve()
     }).catch(error => {
