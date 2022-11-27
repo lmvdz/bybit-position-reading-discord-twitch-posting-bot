@@ -8,8 +8,8 @@
           <v-card-title>Logout</v-card-title>
           <v-card-subtitle>Are you sure you want to logout?</v-card-subtitle>
           <v-card-actions>
-            <v-btn @click="logout()" color="error">Logout</v-btn>
-            <v-btn @click="logoutDialog = false;">Cancel</v-btn>
+            <v-btn variant="outlined" @click="logout()" color="error">Logout</v-btn>
+            <v-btn variant="outlined" @click="logoutDialog = false;">Cancel</v-btn>
           </v-card-actions>
         </v-card>
       </div>
@@ -21,8 +21,8 @@
           <v-card-title>Deletion</v-card-title>
           <v-card-subtitle>Are you sure you want to delete your user?</v-card-subtitle>
           <v-card-actions>
-            <v-btn @click="deleteUser()" color="error">Delete</v-btn>
-            <v-btn @click="deleteDialog = false;">Cancel</v-btn>
+            <v-btn variant="outlined" @click="deleteUser()" color="error">Delete</v-btn>
+            <v-btn  variant="outlined" @click="deleteDialog = false;">Cancel</v-btn>
           </v-card-actions>
         </v-card>
       </div>
@@ -34,8 +34,8 @@
           <v-card-title>Start Running?</v-card-title>
           <v-card-subtitle>Allow the bot to pull data from Exchanges?</v-card-subtitle>
           <v-card-actions>
-            <v-btn @click="start()" color="error">Start</v-btn>
-            <v-btn @click="startDialog = false;">Cancel</v-btn>
+            <v-btn variant="outlined" @click="start()" color="error">Start</v-btn>
+            <v-btn variant="outlined" @click="startDialog = false;">Cancel</v-btn>
           </v-card-actions>
         </v-card>
       </div>
@@ -47,14 +47,14 @@
           <v-card-title>Stop Running?</v-card-title>
           <v-card-subtitle>Are you sure you want to stop the bot?</v-card-subtitle>
           <v-card-actions>
-            <v-btn @click="stop()" color="error">Stop</v-btn>
-            <v-btn @click="stopDialog = false;">Cancel</v-btn>
+            <v-btn variant="outlined" @click="stop()" color="error">Stop</v-btn>
+            <v-btn variant="outlined" @click="stopDialog = false;">Cancel</v-btn>
           </v-card-actions>
         </v-card>
       </div>
     </v-dialog>
 
-    <v-navigation-drawer model-value class="pt-4" color="grey-lighten-3" rail v-if="state.twitchUserInfo !== null">
+    <v-navigation-drawer app model-value class="pt-4" rail v-if="state.twitchUserInfo !== null">
       <v-avatar style="margin-top: 1em; cursor: pointer;" :color="`grey-darken-1`"
         :image="state.twitchUserInfo !== null ? state.twitchUserInfo.profile_image_url : ''" :size="36" @click="() => {
           if (state.twitchUserInfo !== null) {
@@ -62,19 +62,22 @@
           }
         }" class="d-block text-center mx-auto mb-9"></v-avatar>
       <v-divider v-if="state.twitchUserInfo !== null"></v-divider>
-      <v-btn style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.editExchangeKeys" flat
+      <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.editExchangeKeys" flat
         class="d-block text-center mx-auto mb-9" size="32px" icon="mdi-key"
+        :color="state.editExchangeKeys ? 'primary' : 'secondary'"
         @click="state.editExchangeKeys = !state.editExchangeKeys" />
       <v-divider v-if="state.twitchUserInfo !== null"></v-divider>
-      <v-btn style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.editDiscordInfo" flat
+      <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.editDiscordInfo" flat
         class="d-block text-center mx-auto mb-9" size="32px" icon="mdi-forum"
+        :color="state.editDiscordInfo ? 'primary' : 'secondary'"
         @click="state.editDiscordInfo = !state.editDiscordInfo" />
       <v-divider v-if="state.twitchUserInfo !== null"></v-divider>
-      <v-btn style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.editTwitchInfo" flat
+      <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.editTwitchInfo" flat
         class="d-block text-center mx-auto mb-9" size="32px" icon="mdi-chat"
+        :color="state.editTwitchInfo ? 'primary' : 'secondary'"
         @click="state.editTwitchInfo = !state.editTwitchInfo" />
       <v-divider v-if="state.twitchUserInfo !== null"></v-divider>
-      <v-btn style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.deleteDialog" flat
+      <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.deleteDialog" flat
         color="error" class="d-block text-center mx-auto mb-9" size="32px" icon="mdi-trash-can"
         @click="state.deleteDialog = !state.deleteDialog" />
       <v-divider></v-divider>
@@ -116,7 +119,7 @@
           <v-row class="d-flex align-top justify-center"
             v-if="state.twitchUserInfo !== null && state.userInfo !== null">
             <v-col cols="auto">
-              <v-btn :icon="!state.userInfo.IS_RUNNING ? 'mdi-play' : 'mdi-stop'" :disabled="!state.enabled"
+              <v-btn variant="outlined" :icon="!state.userInfo.IS_RUNNING ? 'mdi-play' : 'mdi-stop'" :disabled="!state.enabled"
                 :color="state.userInfo.IS_RUNNING ? 'error' : 'success'" v-if="state.twitchUserInfo !== null" @click="() => {
                   if (state.userInfo.IS_RUNNING) {
                     stopDialog = true;
@@ -144,12 +147,12 @@
                   v-model="exchangeKey.API_KEY" type="password"></v-text-field>
                 <v-text-field :disabled="!enabled" variant="underlined" density="compact" label="API SECRET"
                   v-model="exchangeKey.API_SECRET" type="password"></v-text-field>
-                <v-btn :disabled="!enabled" style="margin-bottom: 2em;" color="error"
+                <v-btn variant="outlined" :disabled="!enabled" style="margin-bottom: 2em;" color="error"
                   @click="() => { state.exchangeKeys.splice(index, 1) }">Remove Exchange API Key #{{ index + 1 }}
                 </v-btn>
                 </p>
                 <p class="d-flex align-top justify-center">
-                  <v-btn :disabled="!enabled" color="primary"
+                  <v-btn variant="outlined" :disabled="!enabled" color="primary"
                     @click="state.exchangeKeys.push({ KEY_ID: uuidv4(), EXCHANGE_ID: '', API_KEY: '', API_SECRET: '', DESCRIPTION: '' })">
                     Add Exchange API Key</v-btn>
                 </p>
@@ -157,12 +160,12 @@
               <div v-if="editExchangeKeys">
                 <p style="margin-top: 1em;">
 
-                  <v-btn :disabled="!state.enabled || exchangeKeysHash === computedExchangeKeysHash"
+                  <v-btn variant="outlined" :disabled="!state.enabled || exchangeKeysHash === computedExchangeKeysHash"
                     style="margin: .25em;" color="success" @click="updateUserExchangeKeys()">Save</v-btn>
-                  <v-btn :disabled="!state.enabled"
+                  <v-btn variant="outlined" :disabled="!state.enabled"
                     v-if="state.exchangeKeys.length !== state.userInfo.EXCHANGE_KEYS.length || exchangeKeysHash !== computedExchangeKeysHash"
                     style="margin: .25em;" color="error" @click="cancelExchangeKeyChanges()">Cancel</v-btn>
-                  <v-btn :disabled="!state.enabled" v-else style="margin: .25em;" color="error"
+                  <v-btn variant="outlined" :disabled="!state.enabled" v-else style="margin: .25em;" color="error"
                     @click="state.editExchangeKeys = !state.editExchangeKeys">Close</v-btn>
                 </p>
               </div>
@@ -172,21 +175,24 @@
                 v-if="state.editDiscordInfo">
                 <h3>Discord Settings</h3>
                 <v-checkbox :disabled="!state.enabled" label="Discord Enabled" v-model="state.discordEnabled" />
-                <a target="_blank"
+                <div style="margin-bottom: 2em;">
+                  <v-btn color="primary" target="_blank" variant="outlined"
                   href="https://discord.com/api/oauth2/authorize?client_id=1044389854236127262&permissions=83968&scope=bot">Invite
-                  Discord Bot</a>
+                  Discord Bot</v-btn>
+                </div>
+                
                 <v-text-field :disabled="!state.enabled" variant="underlined" density="compact"
                   label="Discord Channel ID" v-model="state.discordChannelId"></v-text-field>
                 <v-text-field :disabled="!state.enabled" variant="underlined" density="compact"
                   label="Discord Message ID" v-model="state.discordMessageId"></v-text-field>
                 <p>
-                  <v-btn style="margin: .25em;" color="success" @click="updateUserDiscordInfo()"
+                  <v-btn variant="outlined" style="margin: .25em;" color="success" @click="updateUserDiscordInfo()"
                     :disabled="!state.enabled || !(state.discordEnabled !== state.userInfo.DISCORD_ENABLED || state.discordChannelId !== state.userInfo.DISCORD_CHANNEL || state.discordMessageId !== state.userInfo.DISCORD_MESSAGE)">
                     Save</v-btn>
-                  <v-btn :disabled="!state.enabled" style="margin: .25em;" color="error" @click="cancelDiscordChanges()"
+                  <v-btn variant="outlined" :disabled="!state.enabled" style="margin: .25em;" color="error" @click="cancelDiscordChanges()"
                     v-if="state.discordEnabled !== state.userInfo.DISCORD_ENABLED || state.discordChannelId !== state.userInfo.DISCORD_CHANNEL || state.discordMessageId !== state.userInfo.DISCORD_MESSAGE">
                     Cancel</v-btn>
-                  <v-btn :disabled="!state.enabled" style="margin: .25em;" color="error"
+                  <v-btn variant="outlined" :disabled="!state.enabled" style="margin: .25em;" color="error"
                     @click="state.editDiscordInfo = !state.editDiscordInfo"
                     v-if="state.discordEnabled === state.userInfo.DISCORD_ENABLED && state.discordChannelId === state.userInfo.DISCORD_CHANNEL && state.discordMessageId === state.userInfo.DISCORD_MESSAGE">
                     Close</v-btn>
@@ -199,20 +205,20 @@
                 <h3>Twitch Settings</h3>
                 <v-checkbox :disabled="!state.enabled" label="Twitch Enabled" v-model="twitchEnabled" />
                 <v-checkbox :disabled="!state.enabled" label="Timeout Enabled" v-model="twitchTimeoutEnabled" />
-                <v-btn v-if="!state.connectedToTwitchChannel" @click="connectToTwitchChannel()">Connect To Twitch Channel
+                <v-btn color="primary" style="margin-bottom: 2em;" variant="outlined" v-if="!state.connectedToTwitchChannel" @click="connectToTwitchChannel()">Connect To Twitch Channel
                 </v-btn>
-                <v-btn v-else @click="disconnectToTwitchChannel()">Disconnect from Twitch Channel
+                <v-btn color="error" style="margin-bottom: 2em;" variant="outlined" v-else @click="disconnectFromTwitchChannel()">Disconnect from Twitch Channel
                 </v-btn>
                 <v-text-field :disabled="!state.enabled" variant="underlined" density="compact" type="number"
                   label="Timeout Length (minutes)" v-model="state.twitchTimeoutLength" />
                 <p>
-                  <v-btn style="margin: .25em;" color="success" @click="updateUserTwitchInfo()"
+                  <v-btn variant="outlined" style="margin: .25em;" color="success" @click="updateUserTwitchInfo()"
                     :disabled="!enabled || !(state.twitchEnabled !== userInfo.TWITCH_ENABLED || twitchTimeoutEnabled !== userInfo.TWITCH_TIMEOUT || Number.parseFloat(twitchTimeoutLength.toString()) !== Number.parseFloat(userInfo.TWITCH_TIMEOUT_EXPIRE.toString()))">
                     Save</v-btn>
-                  <v-btn :disabled="!state.enabled" style="margin: .25em;" color="error" @click="cancelTwitchChanges()"
+                  <v-btn variant="outlined" :disabled="!state.enabled" style="margin: .25em;" color="error" @click="cancelTwitchChanges()"
                     v-if="state.twitchEnabled !== userInfo.TWITCH_ENABLED || twitchTimeoutEnabled !== userInfo.TWITCH_TIMEOUT || Number.parseFloat(twitchTimeoutLength.toString()) !== Number.parseFloat(userInfo.TWITCH_TIMEOUT_EXPIRE.toString())">
                     Cancel</v-btn>
-                  <v-btn :disabled="!state.enabled" style="margin: .25em;" color="error"
+                  <v-btn variant="outlined" :disabled="!state.enabled" style="margin: .25em;" color="error"
                     @click="state.editTwitchInfo = !state.editTwitchInfo"
                     v-if="!(twitchEnabled !== userInfo.TWITCH_ENABLED || twitchTimeoutEnabled !== userInfo.TWITCH_TIMEOUT || Number.parseFloat(twitchTimeoutLength.toString()) !== Number.parseFloat(userInfo.TWITCH_TIMEOUT_EXPIRE.toString()))">
                     Close</v-btn>
@@ -286,7 +292,12 @@ const log = (...args: any) => {
 }
 
 const connectTwitch = () => {
-  window.location.href = (`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=z5o8ef6nmef6wbxm2h6ry6xfatvqud&redirect_uri=https://www.cryptopositionsbot.com/&scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls&state=c3ab8aa609ea11e793ae92361f002671`)
+  console.log(window.location.host, window.location.host !== 'localhost:3000')
+  if (window.location.host !== 'localhost:3000') {
+    window.location.href = (`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=z5o8ef6nmef6wbxm2h6ry6xfatvqud&redirect_uri=https://www.cryptopositionsbot.com/&scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls&state=c3ab8aa609ea11e793ae92361f002671`)
+  } else {
+    window.location.href = (`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=z5o8ef6nmef6wbxm2h6ry6xfatvqud&redirect_uri=http://localhost:3000/&scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls&state=c3ab8aa609ea11e793ae92361f002671`)
+  }
 }
 
 onMounted(() => {
