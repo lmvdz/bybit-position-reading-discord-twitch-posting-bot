@@ -5,7 +5,7 @@ import TwitchBot from 'twitch-bot';
 import db from 'secure-db';
 import { v4 as uuidv4 } from 'uuid';
 import qs from 'qs'
-import ccxt from 'ccxt'
+import ccxt, { Market } from 'ccxt'
 
 
 config();
@@ -123,7 +123,6 @@ export default class CryptoPositionsBot {
                     channelUser = channelUser[1]
                     if (channelUser.ENABLED) {
                         if (channelUser.TWITCH_ENABLED) {
-
                             let targetUser = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase() === target.toLowerCase());
                             if (targetUser) {
                                 targetUser = targetUser[1]
@@ -157,7 +156,7 @@ export default class CryptoPositionsBot {
                                             if (positions) {
                                                 positions.forEach((exchangePositionArray, exchangeId) => {
                                                     exchangePositionArray.forEach((position, index) => {
-                                                        formattedMessage.push(`[${target}] [${exchangeId}] ${(position.side) === 'long' ? '🟩 LONG ' : (position.side) === 'short' ? '🟥 SHORT ' : ''} ${(position.contracts)} ${position.symbol} @ ${Number.parseFloat(Number.parseFloat(position.entryPrice).toFixed(2)).toLocaleString('en-US')} uPnL: ${Number.parseFloat(Number.parseFloat(position.unrealizedPnl).toFixed(2)).toLocaleString('en-US')} liq @ ${Number.parseFloat(Number.parseFloat(position.liquidationPrice).toFixed(2)).toLocaleString('en-US')}`)
+                                                        formattedMessage.push(`[${target}] [${exchangeId}] ${(position.side) === 'long' ? '🟩 LONG ' : (position.side) === 'short' ? '🟥 SHORT ' : ''} ${(position.contracts * position.contractSize)} ${position.symbol} @ ${Number.parseFloat(Number.parseFloat(position.entryPrice).toFixed(2)).toLocaleString('en-US')} uPnL: ${Number.parseFloat(Number.parseFloat(position.unrealizedPnl).toFixed(4)).toLocaleString('en-US')} liq @ ${Number.parseFloat(Number.parseFloat(position.liquidationPrice).toFixed(2)).toLocaleString('en-US')}`)
                                                     });
                                                 })
                                                 if (formattedMessage.length > 1) {
@@ -252,7 +251,7 @@ export default class CryptoPositionsBot {
                             },
                             {
                                 name: 'Size',
-                                value: Number.parseFloat(Number.parseFloat(position.contracts).toFixed(2)).toLocaleString("en-US"),
+                                value: Number.parseFloat((Number.parseFloat(position.contracts) * Number.parseFloat(position.contractSize)).toFixed(4)).toLocaleString("en-US"),
                                 inline: true
                             },
                             {
@@ -261,8 +260,13 @@ export default class CryptoPositionsBot {
                                 inline: true
                             },
                             {
+                                name: "Mark Price",
+                                value: Number.parseFloat(Number.parseFloat(position.markPrice).toFixed(2)).toLocaleString("en-US"),
+                                inline: true
+                            },
+                            {
                                 name: "Unrealised PnL",
-                                value: Number.parseFloat(Number.parseFloat(position.unrealizedPnl).toFixed(2)).toLocaleString("en-US"),
+                                value: Number.parseFloat(Number.parseFloat(position.unrealizedPnl).toFixed(4)).toLocaleString("en-US"),
                                 inline: true
                             },
                             {
@@ -303,6 +307,7 @@ export default class CryptoPositionsBot {
                     this.getMessageToEdit(user.ID).then(async message => {
                         try {
                             if (message !== undefined) {
+                                console.log(messageToSend);
                                 await message.edit(messageToSend)
                                 console.log("updated discord message for " + user.TWITCH_CHANNEL)
                             } else {
@@ -353,24 +358,39 @@ export default class CryptoPositionsBot {
 
     async loopFetch(userID: string, index: number) {
         let user = users.get(userID)
-        if (user.ENABLED) {
-            user.IS_RUNNING = true;
-            users.set(user.ID, user);
-            if (this.fetchTimeouts[userID]) {
-                clearTimeout(this.fetchTimeouts)
+        if (user) {
+            if (user.ENABLED) {
+                user.IS_RUNNING = true;
+                users.set(user.ID, user);
+                if (this.fetchTimeouts[userID]) {
+                    clearTimeout(this.fetchTimeouts)
+                }
+                this.fetchTimeouts[userID] = setTimeout(() => {
+                    try {
+                        this.fetchPositionsAndOrdersForUser(userID).then(() => {
+                            setTimeout(() => {
+                                this.loopFetch(userID, index)
+                            }, 5 * 60 * 1000)
+                        })
+                    } catch (error) {
+                        console.error(error);
+                        user = users.get(userID);
+                        if (user) {
+                            user.IS_RUNNING = false;
+                            users.set(user.ID, user);
+                        }
+                    }
+                    
+                }, index * 2000)
+            } else {
+                console.log('user ' + (user as User).TWITCH_CHANNEL + ' not Enabled, stopping loop.');
+                user.IS_RUNNING = false;
+                users.set(user.ID, user);
             }
-            this.fetchTimeouts[userID] = setTimeout(() => {
-                this.fetchPositionsAndOrdersForUser(userID).then(() => {
-                    setTimeout(() => {
-                        this.loopFetch(userID, index)
-                    }, 5 * 60 * 1000)
-                })
-            }, index * 2000)
         } else {
-            console.log('user ' + (user as User).TWITCH_CHANNEL + ' not Enabled, stopping loop.');
-            user.IS_RUNNING = false;
-            users.set(user.ID, user);
+            console.log('user ' + userID + ' not found.');
         }
+        
     }
 
     async startAll() {
@@ -502,17 +522,29 @@ export default class CryptoPositionsBot {
                                 let fetchedPositions = await exchange.fetchPositions();
                                 let userPositions = this.positions.get(user.ID);
                                 let activePositions = [];
-                                await Promise.allSettled(fetchedPositions.map(async (position) => {
+                                await Promise.allSettled(fetchedPositions.map(async (position, index) => {
                                     if (Number.parseFloat(position.contracts) > 0) {
+                                        if (position.markPrice === undefined) {
+                                            let ticker = await exchange.fetchTicker(position.info.symbol);
+                                            position.markPrice = Number.parseFloat(((ticker.bid + ticker.ask)/2).toFixed(2))
+                                        }
+                                        if (position.contractSize === undefined) {
+                                            let market = exchange.market(position.info.symbol) as Market
+                                            position.contractSize = market.contractSize
+                                        }
+                                        if (position.unrealizedPnl === undefined) {
+                                            position.unrealizedPnl = Number.parseFloat(((position.contractSize * position.contracts) * (position.markPrice - position.entryPrice) * (position.side === 'short' ? -1 : 1)).toFixed(4))
+                                        }
                                         activePositions.push(position)
                                     }
                                 }));
                                 if (activePositions.length > 0) {
                                     userPositions = this.positions.get(user.ID);
                                     let updatedUserPositions = userPositions.set(exchangeKey.EXCHANGE_ID, activePositions)
+                                    // console.log(activePositions);
                                     this.positions.set(user.ID, updatedUserPositions)
                                 }
-                                console.log('user ' + (user as User).TWITCH_CHANNEL + ' has ' + activePositions.length + ' active positions.');
+                                console.log('user ' + exchangeKey.EXCHANGE_ID + ' ' + (user as User).TWITCH_CHANNEL + ' has ' + activePositions.length + ' active positions.');
                                 user = users.get(user.ID);
                                 user.LAST_UPDATE = new Date().toUTCString();
                                 users.set(user.ID, user)
@@ -624,7 +656,7 @@ export default class CryptoPositionsBot {
         if (user) {
             user = user[1]
             users.delete(user.ID)
-            console.log('removed user ' + user.ID)
+            console.log('removed user ' + twitchChannel)
             return true;
         } else {
             console.error('failed to remove ' + twitchChannel + ' user not found')
@@ -688,6 +720,7 @@ export default class CryptoPositionsBot {
                     }
                 }
             });
+            console.log(updatedExchangeKeys);
             user.EXCHANGE_KEYS = updatedExchangeKeys;
             users.set(user.ID, user);
             console.log('updated ' + user.TWITCH_CHANNEL + '\'s exchange keys info');
@@ -736,7 +769,7 @@ export default class CryptoPositionsBot {
             user = user[1]
             user.ENABLED = enabled;
             users.set(user.ID, user);
-            console.log('updated' + user.TWITCH_CHANNEL + '\'s enabled: ' + enabled);
+            console.log('updated ' + user.TWITCH_CHANNEL + '\'s enabled state: ' + enabled);
             return true;
         } else {
             console.error('failed to update user enabled state for ' + twitchChannel + ' user not found')
@@ -748,11 +781,63 @@ export default class CryptoPositionsBot {
         let user = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) === twitchChannel.toLowerCase());
         if (user) {
             user = user[1]
-            if (user.ENABLED && user.TWITCH_ENABLED && !this.twitchBot.channels.some(channel => channel.toLowerCase() === user.TWITCH_CHANNEL.toLowerCase())) {
-                this.twitchBot.join(user.TWITCH_CHANNEL.toLowerCase())
-                console.log('connected to twitch channel ' + (user as User).TWITCH_CHANNEL)
-                return true;
+            if (user.ENABLED) {
+                if (user.TWITCH_ENABLED) {
+                    if (!this.twitchBot.channels.some(channel => channel.toLowerCase() === user.TWITCH_CHANNEL.toLowerCase())) {
+                        this.twitchBot.join(user.TWITCH_CHANNEL.toLowerCase())
+                        console.log('connected to twitch channel ' + (user as User).TWITCH_CHANNEL)
+                        return true;
+                    } else {
+                        console.log('already connected to twitch channel ' + (user as User).TWITCH_CHANNEL)
+                        return 'already connected to twitch channel ' + (user as User).TWITCH_CHANNEL;
+                    }
+                } else {
+                    console.log('twitch setting not enabled ' + (user as User).TWITCH_CHANNEL)
+                    return 'twitch setting not enabled ' + (user as User).TWITCH_CHANNEL;
+                }
+            } else {
+                console.log('User not enabled ' + (user as User).TWITCH_CHANNEL)
+                return 'User not enabled ' + (user as User).TWITCH_CHANNEL;
             }
+        } else {
+            console.log('Could not find user associated to twitch channel: ' + twitchChannel)
+            return 'Could not find user associated to twitch channel ' + twitchChannel;
+        }
+    }
+
+    async disconnectFromTwitchChannel(twitchChannel: string) {
+        let user = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) === twitchChannel.toLowerCase());
+        if (user) {
+            user = user[1]
+            if (user.ENABLED) {
+                if (user.TWITCH_ENABLED) {
+                    if (this.twitchBot.channels.some((channel: string) => channel.toLowerCase() === user.TWITCH_CHANNEL.toLowerCase())) {
+                        this.twitchBot.part(user.TWITCH_CHANNEL.toLowerCase())
+                        console.log('disconnected from twitch channel ' + (user as User).TWITCH_CHANNEL)
+                        return true;
+                    } else {
+                        console.log('not connected to twitch channel ' + (user as User).TWITCH_CHANNEL)
+                        return 'not connected to twitch channel ' + (user as User).TWITCH_CHANNEL;
+                    }
+                } else {
+                    console.log('twitch setting not enabled ' + (user as User).TWITCH_CHANNEL)
+                    return 'twitch setting not enabled ' + (user as User).TWITCH_CHANNEL;
+                }
+            } else {
+                console.log('User not enabled ' + (user as User).TWITCH_CHANNEL)
+                return 'User not enabled ' + (user as User).TWITCH_CHANNEL;
+            }
+        } else {
+            console.log('Could not find user associated to twitch channel: ' + twitchChannel)
+            return 'Could not find user associated to twitch channel ' + twitchChannel;
+        }
+    }
+
+    async isConnectedToTwitchChannel(twitchChannel: string) : Promise<boolean> {
+        let user = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) === twitchChannel.toLowerCase());
+        if (user) {
+            user = user[1]
+            return (this.twitchBot.channels.some((channel: string) => channel.toLowerCase() === user.TWITCH_CHANNEL.toLowerCase()))
         }
         return false;
     }
@@ -761,7 +846,7 @@ export default class CryptoPositionsBot {
         let user = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) === twitchChannel.toLowerCase());
         if (user) {
             user = user[1]
-            user.EXCHANGE_KEYS = (user as User).EXCHANGE_KEYS.map(key => ({ EXCHANGE_ID: key.EXCHANGE_ID, API_KEY: new Array(key.API_KEY.length + 1).join("*"), API_SECRET: new Array(key.API_SECRET.length + 1).join("*"), DESCRIPTION: key.DESCRIPTION } as ExchangeKey));
+            user.EXCHANGE_KEYS = (user as User).EXCHANGE_KEYS.map(key => ({ KEY_ID: key.KEY_ID, EXCHANGE_ID: key.EXCHANGE_ID, API_KEY: new Array(key.API_KEY.length + 1).join("*"), API_SECRET: new Array(key.API_SECRET.length + 1).join("*"), DESCRIPTION: key.DESCRIPTION } as ExchangeKey));
             return user;
         } else {
             try {

@@ -9,7 +9,7 @@
           <v-card-subtitle>Are you sure you want to logout?</v-card-subtitle>
           <v-card-actions>
             <v-btn @click="logout()" color="error">Logout</v-btn>
-            <v-btn @click="logoutDialog=false;">Cancel</v-btn>
+            <v-btn @click="logoutDialog = false;">Cancel</v-btn>
           </v-card-actions>
         </v-card>
       </div>
@@ -22,7 +22,7 @@
           <v-card-subtitle>Are you sure you want to delete your user?</v-card-subtitle>
           <v-card-actions>
             <v-btn @click="deleteUser()" color="error">Delete</v-btn>
-            <v-btn @click="deleteDialog=false;">Cancel</v-btn>
+            <v-btn @click="deleteDialog = false;">Cancel</v-btn>
           </v-card-actions>
         </v-card>
       </div>
@@ -35,7 +35,7 @@
           <v-card-subtitle>Allow the bot to pull data from Exchanges?</v-card-subtitle>
           <v-card-actions>
             <v-btn @click="start()" color="error">Start</v-btn>
-            <v-btn @click="startDialog=false;">Cancel</v-btn>
+            <v-btn @click="startDialog = false;">Cancel</v-btn>
           </v-card-actions>
         </v-card>
       </div>
@@ -48,7 +48,7 @@
           <v-card-subtitle>Are you sure you want to stop the bot?</v-card-subtitle>
           <v-card-actions>
             <v-btn @click="stop()" color="error">Stop</v-btn>
-            <v-btn @click="stopDialog=false;">Cancel</v-btn>
+            <v-btn @click="stopDialog = false;">Cancel</v-btn>
           </v-card-actions>
         </v-card>
       </div>
@@ -60,8 +60,7 @@
           if (state.twitchUserInfo !== null) {
             state.logoutDialog = true;
           }
-        }"
-        class="d-block text-center mx-auto mb-9"></v-avatar>
+        }" class="d-block text-center mx-auto mb-9"></v-avatar>
       <v-divider v-if="state.twitchUserInfo !== null"></v-divider>
       <v-btn style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.editExchangeKeys" flat
         class="d-block text-center mx-auto mb-9" size="32px" icon="mdi-key"
@@ -76,8 +75,7 @@
         @click="state.editTwitchInfo = !state.editTwitchInfo" />
       <v-divider v-if="state.twitchUserInfo !== null"></v-divider>
       <v-btn style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.deleteDialog" flat
-        color="error"
-        class="d-block text-center mx-auto mb-9" size="32px" icon="mdi-trash-can"
+        color="error" class="d-block text-center mx-auto mb-9" size="32px" icon="mdi-trash-can"
         @click="state.deleteDialog = !state.deleteDialog" />
       <v-divider></v-divider>
 
@@ -104,7 +102,7 @@
                 Twitch</v-btn>
             </v-col>
           </v-row>
-          
+
 
           <v-row class="d-flex align-top justify-center"
             v-if="state.twitchUserInfo !== null && state.userInfo !== null">
@@ -118,13 +116,14 @@
           <v-row class="d-flex align-top justify-center"
             v-if="state.twitchUserInfo !== null && state.userInfo !== null">
             <v-col cols="auto">
-              <v-btn :icon="!state.userInfo.IS_RUNNING ? 'mdi-play' : 'mdi-stop'" :disabled="!state.enabled" :color="state.userInfo.IS_RUNNING ? 'error' :'success'" v-if="state.twitchUserInfo !== null" @click="() => {
-                if (state.userInfo.IS_RUNNING) {
-                  stopDialog = true;
-                } else {
-                  startDialog = true;
-                }
-              }">
+              <v-btn :icon="!state.userInfo.IS_RUNNING ? 'mdi-play' : 'mdi-stop'" :disabled="!state.enabled"
+                :color="state.userInfo.IS_RUNNING ? 'error' : 'success'" v-if="state.twitchUserInfo !== null" @click="() => {
+                  if (state.userInfo.IS_RUNNING) {
+                    stopDialog = true;
+                  } else {
+                    startDialog = true;
+                  }
+                }">
               </v-btn>
             </v-col>
           </v-row>
@@ -146,19 +145,19 @@
                 <v-text-field :disabled="!enabled" variant="underlined" density="compact" label="API SECRET"
                   v-model="exchangeKey.API_SECRET" type="password"></v-text-field>
                 <v-btn :disabled="!enabled" style="margin-bottom: 2em;" color="error"
-                  @click="() => { state.exchangeKeys.splice(index, 1) }">Remove Exchange API Key #{{ index + 1 }}</v-btn>
+                  @click="() => { state.exchangeKeys.splice(index, 1) }">Remove Exchange API Key #{{ index + 1 }}
+                </v-btn>
                 </p>
                 <p class="d-flex align-top justify-center">
                   <v-btn :disabled="!enabled" color="primary"
-                    @click="state.exchangeKeys.push({ KEY_ID: uuidv4(), EXCHANGE_ID: '', API_KEY: '', API_SECRET: '', DESCRIPTION: ''})">
+                    @click="state.exchangeKeys.push({ KEY_ID: uuidv4(), EXCHANGE_ID: '', API_KEY: '', API_SECRET: '', DESCRIPTION: '' })">
                     Add Exchange API Key</v-btn>
                 </p>
               </div>
               <div v-if="editExchangeKeys">
                 <p style="margin-top: 1em;">
-                  
-                  <v-btn
-                    :disabled="!state.enabled || exchangeKeysHash === computedExchangeKeysHash"
+
+                  <v-btn :disabled="!state.enabled || exchangeKeysHash === computedExchangeKeysHash"
                     style="margin: .25em;" color="success" @click="updateUserExchangeKeys()">Save</v-btn>
                   <v-btn :disabled="!state.enabled"
                     v-if="state.exchangeKeys.length !== state.userInfo.EXCHANGE_KEYS.length || exchangeKeysHash !== computedExchangeKeysHash"
@@ -172,8 +171,10 @@
               <div style="margin-top: 1em; max-height: 400px; min-width: 400px; padding: 1em;" class="overflow-y-auto"
                 v-if="state.editDiscordInfo">
                 <h3>Discord Settings</h3>
-                <v-checkbox :disabled="!state.enabled" label="Discord Enabled" v-model="state.discordEnabled">
-                </v-checkbox>
+                <v-checkbox :disabled="!state.enabled" label="Discord Enabled" v-model="state.discordEnabled" />
+                <a target="_blank"
+                  href="https://discord.com/api/oauth2/authorize?client_id=1044389854236127262&permissions=83968&scope=bot">Invite
+                  Discord Bot</a>
                 <v-text-field :disabled="!state.enabled" variant="underlined" density="compact"
                   label="Discord Channel ID" v-model="state.discordChannelId"></v-text-field>
                 <v-text-field :disabled="!state.enabled" variant="underlined" density="compact"
@@ -196,11 +197,14 @@
               <div style="margin-top: 1em; max-height: 400px; min-width: 400px; padding: 1em;" class="overflow-y-auto"
                 v-if="editTwitchInfo">
                 <h3>Twitch Settings</h3>
-                <v-checkbox :disabled="!state.enabled" label="Twitch Enabled" v-model="twitchEnabled"></v-checkbox>
-                <v-checkbox :disabled="!state.enabled" label="Timeout Enabled" v-model="twitchTimeoutEnabled">
-                </v-checkbox>
+                <v-checkbox :disabled="!state.enabled" label="Twitch Enabled" v-model="twitchEnabled" />
+                <v-checkbox :disabled="!state.enabled" label="Timeout Enabled" v-model="twitchTimeoutEnabled" />
+                <v-btn v-if="!state.connectedToTwitchChannel" @click="connectToTwitchChannel()">Connect To Twitch Channel
+                </v-btn>
+                <v-btn v-else @click="disconnectToTwitchChannel()">Disconnect from Twitch Channel
+                </v-btn>
                 <v-text-field :disabled="!state.enabled" variant="underlined" density="compact" type="number"
-                  label="Timeout Length (minutes)" v-model="state.twitchTimeoutLength"></v-text-field>
+                  label="Timeout Length (minutes)" v-model="state.twitchTimeoutLength" />
                 <p>
                   <v-btn style="margin: .25em;" color="success" @click="updateUserTwitchInfo()"
                     :disabled="!enabled || !(state.twitchEnabled !== userInfo.TWITCH_ENABLED || twitchTimeoutEnabled !== userInfo.TWITCH_TIMEOUT || Number.parseFloat(twitchTimeoutLength.toString()) !== Number.parseFloat(userInfo.TWITCH_TIMEOUT_EXPIRE.toString()))">
@@ -251,6 +255,8 @@ const discordEnabled = ref<boolean>(false);
 const twitchEnabled = ref<boolean>(false);
 const twitchTimeoutEnabled = ref<boolean>(false);
 const twitchTimeoutLength = ref<number>(5);
+const connectedToTwitchChannel = ref<boolean>(false);
+
 const userInfo = ref<any>(null);
 
 const state = reactive({
@@ -271,7 +277,8 @@ const state = reactive({
   deleteDialog,
   logoutDialog,
   startDialog,
-  stopDialog
+  stopDialog,
+  connectedToTwitchChannel
 })
 
 const log = (...args: any) => {
@@ -279,12 +286,9 @@ const log = (...args: any) => {
 }
 
 const connectTwitch = () => {
-  if (window.location.hostname === 'www.cryptopositionsbot.com') {
-    window.open(`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=z5o8ef6nmef6wbxm2h6ry6xfatvqud&redirect_uri=https://www.cryptopositionsbot.com/&scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls&state=c3ab8aa609ea11e793ae92361f002671`)
-  } else {
-    window.location.href = (`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=z5o8ef6nmef6wbxm2h6ry6xfatvqud&redirect_uri=http://localhost:3000/&scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls&state=c3ab8aa609ea11e793ae92361f002671`) 
-  }
+  window.location.href = (`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=z5o8ef6nmef6wbxm2h6ry6xfatvqud&redirect_uri=https://www.cryptopositionsbot.com/&scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls&state=c3ab8aa609ea11e793ae92361f002671`)
 }
+
 onMounted(() => {
   if (document.location.hash) {
     var hash = {} as any;
@@ -296,7 +300,11 @@ onMounted(() => {
     document.location.hash = '';
     getTwitchUserInfo().then(() => {
       getUserInfo().then(() => {
-
+        isConnectedToChannel().then(connected => {
+          state.connectedToTwitchChannel = connected;
+        }).catch(error => {
+          console.error(error);
+        })
       }).catch(error => {
         console.error(error);
       })
@@ -372,8 +380,8 @@ const updateUserExchangeKeys = (): Promise<void> => {
         return {
           EXCHANGE_ID: exchangeKey.EXCHANGE_ID,
           DESCRIPTION: exchangeKey.DESCRIPTION,
-          API_KEY: new Array(exchangeKey.API_KEY.length+1).join("*"),
-          API_SECRET: new Array(exchangeKey.API_SECRET.length+1).join("*"),
+          API_KEY: new Array(exchangeKey.API_KEY.length + 1).join("*"),
+          API_SECRET: new Array(exchangeKey.API_SECRET.length + 1).join("*"),
           KEY_ID: exchangeKey.KEY_ID
         } as ExchangeKey
       });
@@ -442,7 +450,7 @@ const logout = () => {
   state.twitchUserInfo = null
 }
 
-const deleteUser = () : Promise<void> => {
+const deleteUser = (): Promise<void> => {
   return new Promise((resolve, reject) => {
     let data = {
       access_token: state.twitchAccessToken.access_token
@@ -488,6 +496,62 @@ const stop = (): Promise<void> => {
       reject(error);
     })
   })
+}
+
+const connectToTwitchChannel = (): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    isConnectedToChannel().then((connected) => {
+      if (!connected) {
+        let data = {
+          access_token: state.twitchAccessToken.access_token
+        }
+        axios.post('https://bot.cryptopositionsbot.com/connectToTwitchChannel', data).then((response) => {
+          resolve(response.data)
+        }).catch(error => {
+          console.error(error);
+          reject(error);
+        })
+      } else {
+        notify("Already connected to Twitch Channel");
+      }
+    })
+  })
+}
+
+const disconnectFromTwitchChannel = (): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    isConnectedToChannel().then((connected) => {
+      if (connected) {
+        let data = {
+          access_token: state.twitchAccessToken.access_token
+        }
+        axios.post('https://bot.cryptopositionsbot.com/disconnectFromTwitchChannel', data).then((response) => {
+          resolve(response.data)
+        }).catch(error => {
+          console.error(error);
+          reject(error);
+        })
+      } else {
+        notify("Not connected to Twitch Channel");
+      }
+    })
+  })
+}
+
+const isConnectedToChannel = (): Promise<boolean> => {
+  return new Promise((resolve, reject) => {
+    1
+    axios.get(`https://bot.cryptopositionsbot.com/isConnectedToChannel?access_token=${state.twitchAccessToken.access_token}`).then((response) => {
+      resolve(response.data)
+    }).catch(error => {
+      console.error(error);
+      reject(error);
+    })
+  })
+}
+
+const notify = (message: string) => {
+
 }
 
 interface User {

@@ -30,8 +30,7 @@ app.use(cors())
 app.use(bodyParser.json())
 
 app.post("/addUser", cors(), (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    if (ip === '::1') {
+    
         if (req.body !== undefined) {
             if (req.body.exchangeKeys === undefined) {
                 res.send('missing exchangeKeys')
@@ -57,15 +56,12 @@ app.post("/addUser", cors(), (req, res) => {
             res.send('missing exchange_keys, discord_channel_id, access_token')
         }
         
-    } else {
-        res.status(300).send(ip +  " Access Denied")
-    }
+    
     
 })
 
 app.post('/removeUser', cors(), (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    if (ip === '::1') {
+    
         if (req.body !== undefined) {
             if (req.body.access_token === undefined) {
                 res.send('missing access_token')
@@ -85,14 +81,11 @@ app.post('/removeUser', cors(), (req, res) => {
         } else {
             res.send('missing access_token')
         }
-    } else {
-        res.status(300).send("Access Denied")
-    }
+    
 })
 
 app.post('/enableUser', cors(), (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    if (ip === '::1') {
+    
         if (req.body !== undefined) {
             if (req.body.access_token === undefined) {
                 res.send('missing access_token')
@@ -112,14 +105,11 @@ app.post('/enableUser', cors(), (req, res) => {
         } else {
             res.send('missing access_token')
         }
-    } else {
-        res.status(300).send(ip +  " Access Denied")
-    }
+    
 })
 
 app.post('/disableUser', cors(), (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    if (ip === '::1') {
+    
         if (req.body !== undefined) {
             if (req.body.access_token === undefined) {
                 res.send('missing access_token')
@@ -139,14 +129,11 @@ app.post('/disableUser', cors(), (req, res) => {
         } else {
             res.send('missing access_token')
         }
-    } else {
-        res.status(300).send(ip +  " Access Denied")
-    }
+    
 })
 
 app.post('/connectToTwitchChannel', cors(), (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    if (ip === '::1') {
+    
         if (req.body !== undefined) {
             if (req.body.access_token === undefined) {
                 res.send('missing access_token')
@@ -166,14 +153,61 @@ app.post('/connectToTwitchChannel', cors(), (req, res) => {
         } else {
             res.send('missing access_token')
         }
+    
+})
+
+
+app.post('/disconnectFromTwitchChannel', cors(), (req, res) => {
+    
+    if (req.body !== undefined) {
+        if (req.body.access_token === undefined) {
+            res.send('missing access_token')
+        } else {
+            getTwitchUserInfo(req.body.access_token).then((data) => {
+                bot.disconnectFromTwitchChannel((data as any).display_name).then(() => {
+                    res.send(true);
+                }).catch(error => {
+                    console.error(error);
+                    res.send(false)
+                })
+            }).catch(error => {
+                console.error(error);
+                res.send(false);
+            })
+        }
     } else {
-        res.status(300).send(ip +  " Access Denied")
+        res.send('missing access_token')
     }
+
+})
+
+
+app.post('/isConnectedToTwitchChannel', cors(), (req, res) => {
+    
+    if (req.body !== undefined) {
+        if (req.body.access_token === undefined) {
+            res.send('missing access_token')
+        } else {
+            getTwitchUserInfo(req.body.access_token).then((data) => {
+                bot.isConnectedToTwitchChannel((data as any).display_name).then((isConnected) => {
+                    res.send(isConnected);
+                }).catch(error => {
+                    console.error(error);
+                    res.send(false)
+                })
+            }).catch(error => {
+                console.error(error);
+                res.send(false);
+            })
+        }
+    } else {
+        res.send('missing access_token')
+    }
+
 })
 
 app.get('/userInfo', cors(), (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    if (ip === '::1' || ip === '72.110.11.91') {
+    
         if (req.query !== undefined) {
             if (req.query.access_token === undefined) {
                 res.send('missing access_token')
@@ -193,14 +227,11 @@ app.get('/userInfo', cors(), (req, res) => {
         } else {
             res.send('missing access_token')
         }
-    } else {
-        res.status(300).send(ip +  " Access Denied")
-    }
+    
 })
 
 app.post('/userExchangeKeys', cors(), (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    if (ip === '::1' || ip === '72.110.11.91') {
+    
         if (req.body !== undefined) {
             if (req.body.access_token === undefined) {
                 res.send('missing access_token')
@@ -220,14 +251,11 @@ app.post('/userExchangeKeys', cors(), (req, res) => {
         } else {
             res.send('missing access_token')
         }
-    } else {
-        res.status(300).send(ip +  " Access Denied")
-    }
+    
 })
 
 app.post('/userDiscordInfo', cors(), (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    if (ip === '::1' || ip === '72.110.11.91') {
+    
         if (req.body !== undefined) {
             if (req.body.access_token === undefined) {
                 res.send('missing access_token')
@@ -247,14 +275,11 @@ app.post('/userDiscordInfo', cors(), (req, res) => {
         } else {
             res.send('missing access_token')
         }
-    } else {
-        res.status(300).send(ip +  " Access Denied")
-    }
+    
 })
 
 app.post('/userTwitchInfo', cors(), (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    if (ip === '::1' || ip === '72.110.11.91') {
+    
         if (req.body !== undefined) {
             if (req.body.access_token === undefined) {
                 res.send('missing access_token')
@@ -274,14 +299,11 @@ app.post('/userTwitchInfo', cors(), (req, res) => {
         } else {
             res.send('missing access_token')
         }
-    } else {
-        res.status(300).send(ip +  " Access Denied")
-    }
+    
 })
 
 app.post('/start', cors(), (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    if (ip === '::1' || ip === '72.110.11.91') {
+    
         if (req.body !== undefined) {
             if (req.body.access_token === undefined) {
                 res.send('missing access_token')
@@ -301,14 +323,11 @@ app.post('/start', cors(), (req, res) => {
         } else {
             res.send('missing access_token')
         }
-    } else {
-        res.status(300).send(ip +  " Access Denied")
-    }
+    
 })
 
 app.post('/stop', cors(), (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    if (ip === '::1' || ip === '72.110.11.91') {
+    
         if (req.body !== undefined) {
             if (req.body.access_token === undefined) {
                 res.send('missing access_token')
@@ -328,14 +347,11 @@ app.post('/stop', cors(), (req, res) => {
         } else {
             res.send('missing access_token')
         }
-    } else {
-        res.status(300).send(ip +  " Access Denied")
-    }
+    
 })
 
 app.post('/userEnabled', cors(), (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    if (ip === '::1' || ip === '72.110.11.91') {
+    
         if (req.body !== undefined) {
             if (req.body.access_token === undefined) {
                 res.send('missing access_token')
@@ -355,9 +371,7 @@ app.post('/userEnabled', cors(), (req, res) => {
         } else {
             res.send('missing access_token')
         }
-    } else {
-        res.status(300).send(ip +  " Access Denied")
-    }
+    
 })
 
 const getTwitchUserInfo = (access_token: string) => {
@@ -372,8 +386,7 @@ const getTwitchUserInfo = (access_token: string) => {
 }
 
 app.get('/twitchUserInfo', cors(), (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    if (ip === '::1' || ip === '72.110.11.91') {
+    
         if (req.query !== undefined) {
             if (req.query.access_token === undefined) {
                 res.send('missing access_token')
@@ -388,9 +401,7 @@ app.get('/twitchUserInfo', cors(), (req, res) => {
         } else {
             res.send('missing access_token')
         }
-    } else {
-        res.status(300).send(ip +  " Access Denied")
-    }
+    
 })
 
 app.listen(3216, () => {

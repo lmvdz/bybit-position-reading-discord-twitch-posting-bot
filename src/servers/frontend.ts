@@ -8,7 +8,7 @@ config()
 const app = express();
 app.use(cors())
 app.use(bodyParser.json())
-app.use(express.static(__dirname + '/dist'))
+app.use(cors(), express.static(__dirname + '/dist'))
 
 // app.get("/", cors(), (req, res) => {
 //     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
