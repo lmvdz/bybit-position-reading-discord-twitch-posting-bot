@@ -97,10 +97,10 @@
 
           <h2 class="text-h4 font-weight-bold" v-if="state.twitchUserInfo !== null" style="color: rgb(169, 94, 171)">Logged In As: {{ state.twitchUserInfo.display_name }} <v-btn size="x-small" variant="plain" icon="mdi-share" color="success" @click="copyRefLink()"></v-btn></h2>
           <h3 class="text-h5 font-weight-bold" v-if="state.userInfo !== null && state.userInfo.REF_LINK !== null && state.userInfo.REF_LINK !== undefined && state.userInfo.REF_LINK !== ''" style="color: rgb(148 143 149)">Referred By: {{ state.userInfo.REF_LINK }}</h3>
-          <v-text-field style="margin: 2em auto 0 auto; width: 300px;" variant="underlined" persistent-hint hint="Can not be changed once set." label="Referred By (Twitch Username)" v-model="state.refLink" v-if="(state.userInfo === null && state.twitchUserInfo === null ) || (state.userInfo !== null && !(state.userInfo.REF_LINK !== null && state.userInfo.REF_LINK !== undefined && state.userInfo.REF_LINK !== ''))">
+          <v-text-field style="margin: 2em auto 0 auto; width: 300px;" variant="underlined" persistent-hint :hint="state.refLink.toLowerCase() === state.userInfo.TWITCH_CHANNEL.substring(1).toLowerCase() ? 'Can not refer yourself.' : 'Can not be changed once set.'" label="Referred By (Twitch Username)" v-model="state.refLink" v-if="(state.userInfo === null && state.twitchUserInfo === null ) || (state.userInfo !== null && !(state.userInfo.REF_LINK !== null && state.userInfo.REF_LINK !== undefined && state.userInfo.REF_LINK !== ''))">
             <template v-slot:append-inner v-if="(state.userInfo !== null && !(state.userInfo.REF_LINK !== null && state.userInfo.REF_LINK !== undefined && state.userInfo.REF_LINK !== ''))">
                 <v-btn
-                  :disabled="state.refLink === '' || state.refLink === null || state.refLink === undefined"
+                  :disabled="state.refLink === '' || state.refLink === null || state.refLink === undefined || state.refLink.toLowerCase() === state.userInfo.TWITCH_CHANNEL.substring(1).toLowerCase()"
                   @click="trySetupRefLink(state.refLink)"
                   variant="text"
                   icon="mdi-content-save" color="success"
