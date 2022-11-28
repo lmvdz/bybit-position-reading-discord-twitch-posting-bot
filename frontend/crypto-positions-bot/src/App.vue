@@ -93,19 +93,27 @@
 
           <h1 class="text-h3 font-weight-bold">CryptoPositionsBot</h1>
 
-          <h2 class="text-h4 font-weight-bold" v-if="state.twitchUserInfo !== null" style="color: rgb(169, 94, 171)">
-            {{ state.twitchUserInfo.display_name }}</h2>
-
+          <h2 class="text-h4 font-weight-bold" v-if="state.twitchUserInfo !== null" style="color: rgb(169, 94, 171)">Logged In As: {{ state.twitchUserInfo.display_name }}</h2>
+          <h3 class="text-h5 font-weight-bold" v-if="state.userInfo !== null && state.userInfo.REF_LINK !== null && state.userInfo.REF_LINK !== undefined && state.userInfo.REF_LINK !== ''" style="color: rgb(169, 94, 171)">Referred By: {{ state.userInfo.REF_LINK }}</h3>
+          <v-text-field style="margin: 2em auto 0 auto; width: 300px;" variant="underlined" persistent-hint hint="Can not be changed once set." label="Referred By (Twitch Username)" v-model="state.refLink" v-if="(state.userInfo === null && state.twitchUserInfo === null ) || (state.userInfo !== null && !(state.userInfo.REF_LINK !== null && state.userInfo.REF_LINK !== undefined && state.userInfo.REF_LINK !== ''))">
+            <template v-slot:append-inner v-if="(state.userInfo !== null && !(state.userInfo.REF_LINK !== null && state.userInfo.REF_LINK !== undefined && state.userInfo.REF_LINK !== ''))">
+                <v-btn
+                  :disabled="state.refLink === '' || state.refLink === null || state.refLink === undefined"
+                  @click="trySetupRefLink(state.refLink)"
+                  variant="text"
+                  icon="mdi-content-save" color="success"
+                ></v-btn>
+            </template>
+          </v-text-field>
           <div class="py-5" />
 
-          <v-row class="d-flex align-top justify-center">
+          <v-row class="d-flex align-top justify-center" v-if="state.twitchUserInfo === null">
             <v-col cols="auto">
               <!-- {{twitchUserInfo}} -->
-              <v-btn variant="outlined" v-if="state.twitchUserInfo === null" @click="connectTwitch" color="rgb(169, 94, 171)">Connect
+              <v-btn variant="outlined" @click="connectTwitch" color="rgb(169, 94, 171)">Connect
                 Twitch</v-btn>
             </v-col>
           </v-row>
-
 
           <v-row class="d-flex align-top justify-center"
             v-if="state.twitchUserInfo !== null && state.userInfo !== null">
@@ -241,7 +249,7 @@ import validExchanges from './exchanges';
 import { computed } from '@vue/reactivity';
 
 
-const refLink = ref<string>('lmvdzande');
+const refLink = ref<string>('');
 const referrals = ref<Array<{ twitchChannel: string}>>([]);
 const exchangeKeysHash = ref<string>('');
 const exchangeKeys = ref<Array<ExchangeKey>>([])
@@ -297,22 +305,15 @@ const log = (...args: any) => {
 }
 
 const connectTwitch = () => {
-  console.log(window.location.host, window.location.host !== 'localhost:3000')
-  if (window.location.host !== 'localhost:3000') {
-    window.location.href = (`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=z5o8ef6nmef6wbxm2h6ry6xfatvqud&redirect_uri=https://www.cryptopositionsbot.com/&scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls&state=${state.refLink}`)
+  if (window.location.host !== 'localhost:3000' && window.location.host !== '127.0.0.1:3000') {
+    window.location.href = (`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=z5o8ef6nmef6wbxm2h6ry6xfatvqud&redirect_uri=https://www.cryptopositionsbot.com/&state=${state.refLink}`)
   } else {
-    window.location.href = (`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=z5o8ef6nmef6wbxm2h6ry6xfatvqud&redirect_uri=http://localhost:3000/&scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls&state=${state.refLink}`)
+    window.location.href = (`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=z5o8ef6nmef6wbxm2h6ry6xfatvqud&redirect_uri=http://localhost:3000/&state=${state.refLink}`)
   }
 }
 
 onMounted(() => {
   if (document.location.hash) {
-    let params = (new URL(window.location.href)).searchParams;
-    if (params.has('ref')) {
-      state.refLink = params.get('ref')!;
-      console.log(state.refLink);
-
-    }
     var hash = {} as any;
     decodeURIComponent(window.location.hash.substring(1)).split('&').forEach(variable => {
       let [key, value] = variable.split('=')
@@ -330,6 +331,10 @@ onMounted(() => {
     }).catch(error => {
       console.error(error);
     })
+  }
+  let params = (new URL(window.location.href)).searchParams;
+  if (params.has('ref')) {
+    state.refLink = params.get('ref')!;
   }
 })
 
@@ -361,15 +366,16 @@ const getUserInfo = (): Promise<void> => {
       state.twitchTimeoutEnabled = response.data.TWITCH_TIMEOUT;
       state.twitchTimeoutLength = response.data.TWITCH_TIMEOUT_EXPIRE;
       state.enabled = response.data.ENABLED;
-      if ((response.data.REF_LINK === null || response.data.REF_LINK === undefined) && state.refLink !== '') {
-        trySetupRefLink().then((response) => {
-          notify(response);
-          resolve()
+      state.refLink = response.data.REF_LINK;
+      if ((state.refLink === null || state.refLink === undefined) && state.twitchAccessToken.state !== '' && state.twitchAccessToken.state !== undefined && state.twitchAccessToken.state !== null) {
+        trySetupRefLink(state.twitchAccessToken.state).then(() => {
+          resolve();
         }).catch(error => {
           console.error(error);
+          reject(error);
         })
       } else {
-        resolve()
+        resolve();
       }
     }).catch(error => {
       console.error(error);
@@ -378,20 +384,30 @@ const getUserInfo = (): Promise<void> => {
   })
 }
 
-const trySetupRefLink = () : Promise<string> => {
+const trySetupRefLink = (refLink: string) : Promise<void> => {
   return new Promise((resolve, reject) => {
-    axios.post(`https://bot.cryptopositionsbot.com/trySetupRefLink`, { refLink: state.refLink }).then((response) => {
-      resolve(response.data)
-    }).catch(error => {
-      console.error(error);
-      reject(error);
-    })
+    if(confirm('Are you sure you want to set your referral to: ' + refLink)) {
+      axios.post(`https://bot.cryptopositionsbot.com/trySetupRefLink`, { access_token: state.twitchAccessToken.access_token, refLink: refLink }).then((response) => {
+        if (response.data === true) {
+          state.refLink = refLink
+          state.userInfo.REF_LINK = state.refLink
+          resolve();
+        } else {
+          notify(response.data)
+          state.refLink = ''
+          resolve();
+        }
+      }).catch(error => {
+        console.error(error);
+        reject(error);
+      })            
+    }
   })
 }
 
 const getReferrals = () : Promise<void> => {
   return new Promise((resolve, reject) => {
-    axios.get(`https://bot.cryptopositionsbot.com/getReferrals?access_token=${state.twitchAccessToken.access_token}`).then((response) => {
+    axios.get(`https://bot.cryptopositionsbot.com/referrals?access_token=${state.twitchAccessToken.access_token}`).then((response) => {
       state.referrals = response.data;
       resolve()
     }).catch(error => {
@@ -617,6 +633,10 @@ const isConnectedToTwitchChannel = (): Promise<boolean> => {
 
 const notify = (message: string) => {
 
+}
+
+const confirm = (message: string) => {
+  return window.confirm(message);
 }
 
 interface User {
