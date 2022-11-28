@@ -2,6 +2,8 @@
 
   <v-app id="inspire">
 
+    <v-alert closable variant="tonal" v-model="state.alert.show" :type="state.alert.type" style="z-index: 1000; position: absolute; top: 0px; right: 0px; margin: 1em;" :text="state.alert.message"></v-alert>
+
     <v-dialog v-model="logoutDialog">
       <div class="d-flex align-top justify-center">
         <v-card style="width: 400px">
@@ -91,10 +93,10 @@
 
           <!-- <div class="text-body-2 font-weight-light mb-n1">Welcome to</div> -->
 
-          <h1 class="text-h3 font-weight-bold">CryptoPositionsBot</h1>
+          <h1 v-if="state.twitchUserInfo === null" class="text-h3 font-weight-bold">CryptoPositionsBot</h1>
 
-          <h2 class="text-h4 font-weight-bold" v-if="state.twitchUserInfo !== null" style="color: rgb(169, 94, 171)">Logged In As: {{ state.twitchUserInfo.display_name }}</h2>
-          <h3 class="text-h5 font-weight-bold" v-if="state.userInfo !== null && state.userInfo.REF_LINK !== null && state.userInfo.REF_LINK !== undefined && state.userInfo.REF_LINK !== ''" style="color: rgb(169, 94, 171)">Referred By: {{ state.userInfo.REF_LINK }}</h3>
+          <h2 class="text-h4 font-weight-bold" v-if="state.twitchUserInfo !== null" style="color: rgb(169, 94, 171)">Logged In As: {{ state.twitchUserInfo.display_name }} <v-btn size="x-small" variant="plain" icon="mdi-share" color="success" @click="copyRefLink()"></v-btn></h2>
+          <h3 class="text-h5 font-weight-bold" v-if="state.userInfo !== null && state.userInfo.REF_LINK !== null && state.userInfo.REF_LINK !== undefined && state.userInfo.REF_LINK !== ''" style="color: rgb(148 143 149)">Referred By: {{ state.userInfo.REF_LINK }}</h3>
           <v-text-field style="margin: 2em auto 0 auto; width: 300px;" variant="underlined" persistent-hint hint="Can not be changed once set." label="Referred By (Twitch Username)" v-model="state.refLink" v-if="(state.userInfo === null && state.twitchUserInfo === null ) || (state.userInfo !== null && !(state.userInfo.REF_LINK !== null && state.userInfo.REF_LINK !== undefined && state.userInfo.REF_LINK !== ''))">
             <template v-slot:append-inner v-if="(state.userInfo !== null && !(state.userInfo.REF_LINK !== null && state.userInfo.REF_LINK !== undefined && state.userInfo.REF_LINK !== ''))">
                 <v-btn
@@ -234,10 +236,17 @@
               </div>
             </v-col>
           </v-row>
+          
         </v-responsive>
       </v-container>
+      
     </v-main>
+
+    <v-footer app style="max-height: 1.5em;">
+      CryptoPositionsBot 2022
+    </v-footer>
   </v-app>
+  
 </template>
 
 <script setup lang="ts">
@@ -247,9 +256,18 @@ import axios from 'axios'
 import { v4 as uuidv4 } from 'uuid'
 import validExchanges from './exchanges';
 import { computed } from '@vue/reactivity';
+import { stat } from 'fs';
 
+type AlertType = "success" | "error" | "warning" | "info" | undefined
 
+const alert = ref<{
+  show: boolean,
+  message: string,
+  type: AlertType
+  timeout: NodeJS.Timer | null
+}>({ show: false, message: '', type: 'success', timeout: null})
 const refLink = ref<string>('');
+const copiedRefLink = ref<string>('');
 const referrals = ref<Array<{ twitchChannel: string}>>([]);
 const exchangeKeysHash = ref<string>('');
 const exchangeKeys = ref<Array<ExchangeKey>>([])
@@ -277,6 +295,8 @@ const connectedToTwitchChannel = ref<boolean>(false);
 const userInfo = ref<any>(null);
 
 const state = reactive({
+  alert,
+  copiedRefLink,
   refLink,
   referrals,
   exchangeKeys,
@@ -310,6 +330,19 @@ const connectTwitch = () => {
   } else {
     window.location.href = (`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=z5o8ef6nmef6wbxm2h6ry6xfatvqud&redirect_uri=http://localhost:3000/&state=${state.refLink}`)
   }
+}
+
+const copyRefLink = () => {
+  let refLink = 'https://www.cryptopositionsbot.com/?ref='+state.userInfo.TWITCH_CHANNEL.toLowerCase().substring(1);
+  if (state.copiedRefLink !== refLink) {
+    navigator.clipboard.writeText(refLink);
+    state.copiedRefLink = refLink;
+    notify("Copied ref link to clipboard", 'success')
+  } else {
+    notify("Ref link already copied", 'info')
+  }
+  
+  
 }
 
 onMounted(() => {
@@ -391,9 +424,10 @@ const trySetupRefLink = (refLink: string) : Promise<void> => {
         if (response.data === true) {
           state.refLink = refLink
           state.userInfo.REF_LINK = state.refLink
+          notify('Ref Link connected to ' + state.refLink, 'success')
           resolve();
         } else {
-          notify(response.data)
+          notify(response.data, 'error')
           state.refLink = ''
           resolve();
         }
@@ -411,6 +445,7 @@ const getReferrals = () : Promise<void> => {
       state.referrals = response.data;
       resolve()
     }).catch(error => {
+      notify("Failed to retrieve referrals", 'error');
       console.error(error);
       reject(error);
     })
@@ -452,8 +487,10 @@ const updateUserExchangeKeys = (): Promise<void> => {
           KEY_ID: exchangeKey.KEY_ID
         } as ExchangeKey
       });
+      notify("Updated exchange keys", 'success');
       resolve()
     }).catch(error => {
+      notify("Failed to update exchange keys", 'error');
       console.error(error);
       reject(error);
     })
@@ -467,11 +504,18 @@ const updateUserDiscordInfo = (): Promise<void> => {
       discordInfo: { DISCORD_CHANNEL: state.discordChannelId, DISCORD_MESSAGE: state.discordMessageId, DISCORD_ENABLED: state.discordEnabled }
     }
     axios.post(`https://bot.cryptopositionsbot.com/userDiscordInfo`, data).then((response) => {
-      state.userInfo.DISCORD_CHANNEL = state.discordChannelId;
-      state.userInfo.DISCORD_MESSAGE = state.discordMessageId;
-      state.userInfo.DISCORD_ENABLED = state.discordEnabled;
+      if (response.data === true) {
+        state.userInfo.DISCORD_CHANNEL = state.discordChannelId;
+        state.userInfo.DISCORD_MESSAGE = state.discordMessageId;
+        state.userInfo.DISCORD_ENABLED = state.discordEnabled;
+        notify("Updated user discord info", 'success');
+      } else {
+        notify("Failed to update user discord info", 'error');
+      }
+      
       resolve()
     }).catch(error => {
+      notify("Failed to update user discord info", 'error');
       console.error(error);
       reject(error);
     })
@@ -485,16 +529,22 @@ const updateUserTwitchInfo = (): Promise<void> => {
       twitchInfo: { TWITCH_ENABLED: state.twitchEnabled, TWITCH_TIMEOUT: state.twitchTimeoutEnabled, TWITCH_TIMEOUT_EXPIRE: state.twitchTimeoutLength }
     }
     axios.post(`https://bot.cryptopositionsbot.com/userTwitchInfo`, data).then((response) => {
-      state.userInfo.TWITCH_ENABLED = state.twitchEnabled;
-      state.userInfo.TWITCH_TIMEOUT = state.twitchTimeoutEnabled;
-      state.userInfo.TWITCH_TIMEOUT_EXPIRE = state.twitchTimeoutLength;
-      isConnectedToTwitchChannel().then(() => {
-        resolve()
-      }).catch(error => {
-        console.error(error);
-        reject(error);
-      })
+      if (response.data === true) {
+        notify("Updated user twitch info", 'success');
+        state.userInfo.TWITCH_ENABLED = state.twitchEnabled;
+        state.userInfo.TWITCH_TIMEOUT = state.twitchTimeoutEnabled;
+        state.userInfo.TWITCH_TIMEOUT_EXPIRE = state.twitchTimeoutLength;
+        isConnectedToTwitchChannel().then(() => {
+          resolve()
+        }).catch(error => {
+          console.error(error);
+          reject(error);
+        })
+      } else {
+        notify("Failed to update user twitch info", 'error');
+      }
     }).catch(error => {
+      notify("Failed to update user twitch info", 'error');
       console.error(error);
       reject(error);
     })
@@ -508,9 +558,15 @@ const updateEnabledState = (): Promise<void> => {
       enabled: state.enabled
     }
     axios.post('https://bot.cryptopositionsbot.com/userEnabled', data).then((response) => {
-      state.userInfo.ENABLED = state.enabled;
+      if (response.data === true) {
+        state.userInfo.ENABLED = state.enabled;
+        notify("Updated user enabled state", 'success');
+      } else {
+        notify("Failed to update user enabled state", 'error');
+      }
       resolve()
     }).catch(error => {
+      notify("Failed to update user enabled state", 'error');
       console.error(error);
       reject(error);
     })
@@ -520,6 +576,7 @@ const updateEnabledState = (): Promise<void> => {
 const logout = () => {
   state.userInfo = null
   state.twitchUserInfo = null
+  notify("Logged out", 'success');
 }
 
 const deleteUser = (): Promise<void> => {
@@ -544,10 +601,16 @@ const start = (): Promise<void> => {
       access_token: state.twitchAccessToken.access_token
     }
     axios.post('https://bot.cryptopositionsbot.com/start', data).then((response) => {
-      state.userInfo.IS_RUNNING = true;
-      state.startDialog = false;
+      if (response.data === true) {
+        state.userInfo.IS_RUNNING = true;
+        state.startDialog = false;
+        notify("Started the bot!", 'success');
+      } else {
+        notify("Failed to start!", 'error');
+      }
       resolve()
     }).catch(error => {
+      notify("Failed to start!", 'error');
       console.error(error);
       reject(error);
     })
@@ -560,10 +623,16 @@ const stop = (): Promise<void> => {
       access_token: state.twitchAccessToken.access_token
     }
     axios.post('https://bot.cryptopositionsbot.com/stop', data).then((response) => {
-      state.userInfo.IS_RUNNING = false;
-      state.stopDialog = false;
+      if (response.data === true) {
+        state.userInfo.IS_RUNNING = false;
+        state.stopDialog = false;
+        notify("Stopped the bot!", 'success');
+      } else {
+        notify("Failed to stop!", 'error');
+      }
       resolve()
     }).catch(error => {
+      notify("Failed to stop!", 'error');
       console.error(error);
       reject(error);
     })
@@ -580,8 +649,9 @@ const connectToTwitchChannel = (): Promise<void> => {
         axios.post('https://bot.cryptopositionsbot.com/connectToTwitchChannel', data).then((response) => {
           if (response.data === true) {
             state.connectedToTwitchChannel = true;
+            notify('Bot connected to twich channel chat', 'success')
           } else {
-            notify(response.data)
+            notify(response.data, 'error')
           }
           resolve(response.data)
         }).catch(error => {
@@ -589,7 +659,7 @@ const connectToTwitchChannel = (): Promise<void> => {
           reject(error);
         })
       } else {
-        notify("Already connected to Twitch Channel");
+        notify("Already connected to Twitch Channel", 'error');
       }
     })
   })
@@ -605,15 +675,16 @@ const disconnectFromTwitchChannel = (): Promise<void> => {
         axios.post('https://bot.cryptopositionsbot.com/disconnectFromTwitchChannel', data).then((response) => {
           if (response.data === true) {
             state.connectedToTwitchChannel = false;
+            notify('Bot disconnected from twich channel chat', 'success')
           } else {
-            notify(response.data)
+            notify(response.data, 'error')
           }
         }).catch(error => {
           console.error(error);
           reject(error);
         })
       } else {
-        notify("Not connected to Twitch Channel");
+        notify("Not connected to Twitch Channel", 'error');
       }
     })
   })
@@ -631,8 +702,16 @@ const isConnectedToTwitchChannel = (): Promise<boolean> => {
   })
 }
 
-const notify = (message: string) => {
-
+const notify = (message: string, type: AlertType) => {
+  state.alert.message = message;
+  state.alert.type = type;
+  state.alert.show = true;
+  if (state.alert.timeout) {
+    clearTimeout(state.alert.timeout)
+  }
+  state.alert.timeout = setTimeout(() => {
+    state.alert.show = false;
+  }, 2500)
 }
 
 const confirm = (message: string) => {
