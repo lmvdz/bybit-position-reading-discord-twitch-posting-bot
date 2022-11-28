@@ -36,7 +36,7 @@
           <v-card-title>Start Running?</v-card-title>
           <v-card-subtitle>Allow the bot to pull data from Exchanges?</v-card-subtitle>
           <v-card-actions>
-            <v-btn variant="outlined" @click="start()" color="error">Start</v-btn>
+            <v-btn variant="outlined" @click="start()" color="success">Start</v-btn>
             <v-btn variant="outlined" @click="startDialog = false;">Cancel</v-btn>
           </v-card-actions>
         </v-card>
