@@ -333,15 +333,8 @@ const connectTwitch = () => {
 }
 
 const copyRefLink = () => {
-  let refLink = 'https://www.cryptopositionsbot.com/?ref='+state.userInfo.TWITCH_CHANNEL.toLowerCase().substring(1);
-  if (state.copiedRefLink !== refLink) {
-    navigator.clipboard.writeText(refLink);
-    state.copiedRefLink = refLink;
-    notify("Copied ref link to clipboard", 'success')
-  } else {
-    notify("Ref link already copied", 'info')
-  }
-  
+  state.copiedRefLink = 'https://www.cryptopositionsbot.com/?ref='+state.userInfo.TWITCH_CHANNEL.toLowerCase().substring(1);
+  notify("Copied ref link to clipboard", 'success')
   
 }
 
