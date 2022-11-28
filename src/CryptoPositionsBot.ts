@@ -94,7 +94,7 @@ export default class CryptoPositionsBot {
         this.twitchBot = new TwitchBot({
             username: 'CryptoPositionBot',
             oauth: process.env.TWITCH_BOT_OAUTH,
-            channels: [...users.all().map(([id, user]) => user.TWITCH_CHANNEL)].flat(Number.POSITIVE_INFINITY)
+            channels: [...users.all().map(([id, user]) => user.TWITCH_CHANNEL.toLowerCase())].flat(Number.POSITIVE_INFINITY)
         })
 
         console.log('twitch bot loaded');
@@ -103,94 +103,100 @@ export default class CryptoPositionsBot {
             console.log(`Joined channel: ${channel}`)
         })
 
+        this.twitchBot.on('part', (channel: string) => {
+            console.log(`Left channel: ${channel}`)
+        })
+
         this.twitchBot.on('error', (err: any) => {
             console.error(err)
         })
 
         this.twitchBot.on('message', (chatter: any) => {
 
-            let target = null
-            if (chatter.message === '!position' || chatter.message === '!positions') {
-                target = chatter.channel.toLowerCase()
-            } else if ((chatter.message.startsWith('!position @') || chatter.message.startsWith('!positions @'))) {
-                target = "#" + chatter.message.substring(chatter.message.indexOf("@") + 1).split(" ")[0].toLowerCase()
-            }
+            if (this.twitchBot.channels.includes(chatter.channel)) {
+                let target = null
+                if (chatter.message === '!position' || chatter.message === '!positions') {
+                    target = chatter.channel.toLowerCase()
+                } else if ((chatter.message.startsWith('!position @') || chatter.message.startsWith('!positions @'))) {
+                    target = "#" + chatter.message.substring(chatter.message.indexOf("@") + 1).split(" ")[0].toLowerCase()
+                }
 
-            if (target !== null) {
+                if (target !== null) {
 
-                let channelUser = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase() === chatter.channel.toLowerCase());
-                if (channelUser) {
-                    channelUser = channelUser[1]
-                    if (channelUser.ENABLED) {
-                        if (channelUser.TWITCH_ENABLED) {
-                            let targetUser = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase() === target.toLowerCase());
-                            if (targetUser) {
-                                targetUser = targetUser[1]
-                                if (targetUser.ENABLED) {
-                                    if (targetUser.TWITCH_ENABLED) {
-                                        if (this.twitchCommandTimeouts['position'][chatter.channel] === undefined) {
-                                            this.twitchCommandTimeouts['position'][chatter.channel] = {}
-                                        }
-                                        if (this.twitchCommandTimeouts['position'][chatter.channel][target] === undefined) {
-                                            this.twitchCommandTimeouts['position'][chatter.channel][target] = {
-                                                timedout: false,
-                                                expires: Date.now()
+                    let channelUser = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase() === chatter.channel.toLowerCase());
+                    if (channelUser) {
+                        channelUser = channelUser[1]
+                        if (channelUser.ENABLED) {
+                            if (channelUser.TWITCH_ENABLED) {
+                                let targetUser = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase() === target.toLowerCase());
+                                if (targetUser) {
+                                    targetUser = targetUser[1]
+                                    if (targetUser.ENABLED) {
+                                        if (targetUser.TWITCH_ENABLED) {
+                                            if (this.twitchCommandTimeouts['position'][chatter.channel] === undefined) {
+                                                this.twitchCommandTimeouts['position'][chatter.channel] = {}
                                             }
-                                        }
-                                        if (!this.twitchCommandTimeouts['position'][chatter.channel][target].timedout) {
-            
-                                            // check for timeout enabled, and user sending the command isn't the channel owner
-                                            if (channelUser.TWITCH_TIMEOUT && (channelUser as User).TWITCH_CHANNEL.toLowerCase().substring(1) !== chatter.username.toLowerCase()) {
-                                                this.twitchCommandTimeouts['position'][chatter.channel][target].timedout = true;
-                                                this.twitchCommandTimeouts['position'][chatter.channel][target].expires = Date.now() + (channelUser.TWITCH_TIMEOUT_EXPIRE * 1000 * 60);
-            
-                                                setTimeout(() => {
-                                                    this.twitchCommandTimeouts['position'][chatter.channel][target].timedout = false;
-                                                }, channelUser.TWITCH_TIMEOUT_EXPIRE * 1000 * 60)
+                                            if (this.twitchCommandTimeouts['position'][chatter.channel][target] === undefined) {
+                                                this.twitchCommandTimeouts['position'][chatter.channel][target] = {
+                                                    timedout: false,
+                                                    expires: Date.now()
+                                                }
                                             }
-            
-                                            let updateTime = targetUser.LAST_UPDATE;
-                                            let formattedMessage = [`[${target}] Positions (${updateTime})`]
-            
-                                            let positions = this.positions.get(targetUser.ID);
-                                            if (positions) {
-                                                positions.forEach((exchangePositionArray, exchangeId) => {
-                                                    exchangePositionArray.forEach((position, index) => {
-                                                        formattedMessage.push(`[${target}] [${exchangeId}] ${(position.side) === 'long' ? '🟩 LONG ' : (position.side) === 'short' ? '🟥 SHORT ' : ''} ${(position.contracts * position.contractSize)} ${position.symbol} @ ${Number.parseFloat(Number.parseFloat(position.entryPrice).toFixed(2)).toLocaleString('en-US')} uPnL: ${Number.parseFloat(Number.parseFloat(position.unrealizedPnl).toFixed(4)).toLocaleString('en-US')} liq @ ${Number.parseFloat(Number.parseFloat(position.liquidationPrice).toFixed(2)).toLocaleString('en-US')}`)
-                                                    });
-                                                })
-                                                if (formattedMessage.length > 1) {
-                                                    formattedMessage.forEach((message, index) => {
-                                                        setTimeout(() => {
-                                                            this.twitchBot.say(message, chatter.channel)
-                                                        }, index * 2500)
+                                            if (!this.twitchCommandTimeouts['position'][chatter.channel][target].timedout) {
+                
+                                                // check for timeout enabled, and user sending the command isn't the channel owner
+                                                if (channelUser.TWITCH_TIMEOUT && (channelUser as User).TWITCH_CHANNEL.toLowerCase().substring(1) !== chatter.username.toLowerCase()) {
+                                                    this.twitchCommandTimeouts['position'][chatter.channel][target].timedout = true;
+                                                    this.twitchCommandTimeouts['position'][chatter.channel][target].expires = Date.now() + (channelUser.TWITCH_TIMEOUT_EXPIRE * 1000 * 60);
+                
+                                                    setTimeout(() => {
+                                                        this.twitchCommandTimeouts['position'][chatter.channel][target].timedout = false;
+                                                    }, channelUser.TWITCH_TIMEOUT_EXPIRE * 1000 * 60)
+                                                }
+                
+                                                let updateTime = targetUser.LAST_UPDATE;
+                                                let formattedMessage = [`[${target}] Positions (${updateTime})`]
+                
+                                                let positions = this.positions.get(targetUser.ID);
+                                                if (positions) {
+                                                    positions.forEach((exchangePositionArray, exchangeId) => {
+                                                        exchangePositionArray.forEach((position, index) => {
+                                                            formattedMessage.push(`[${target}] [${exchangeId}] ${(position.side) === 'long' ? '🟩 LONG ' : (position.side) === 'short' ? '🟥 SHORT ' : ''} ${(position.contracts * position.contractSize)} ${position.symbol} @ ${Number.parseFloat(Number.parseFloat(position.entryPrice).toFixed(2)).toLocaleString('en-US')} uPnL: ${Number.parseFloat(Number.parseFloat(position.unrealizedPnl).toFixed(4)).toLocaleString('en-US')} liq @ ${Number.parseFloat(Number.parseFloat(position.liquidationPrice).toFixed(2)).toLocaleString('en-US')}`)
+                                                        });
                                                     })
+                                                    if (formattedMessage.length > 1) {
+                                                        formattedMessage.forEach((message, index) => {
+                                                            setTimeout(() => {
+                                                                this.twitchBot.say(message, chatter.channel)
+                                                            }, index * 2500)
+                                                        })
+                                                    } else {
+                                                        this.twitchBot.say(`[${target}] No Positions Open (${updateTime})`, chatter.channel)
+                                                    }
                                                 } else {
-                                                    this.twitchBot.say(`[${target}] No Positions Open (${updateTime})`, chatter.channel)
+                                                    this.twitchBot.say(`[${target}] Positions haven't been loaded yet. (${updateTime})`, chatter.channel)
                                                 }
                                             } else {
-                                                this.twitchBot.say(`[${target}] Positions haven't been loaded yet. (${updateTime})`, chatter.channel)
+                                                this.twitchBot.say(`[${target}] Please try again in ${Math.floor((this.twitchCommandTimeouts['position'][chatter.channel][target].expires - Date.now()) / 1000)} seconds.`, chatter.channel)
                                             }
                                         } else {
-                                            this.twitchBot.say(`[${target}] Please try again in ${Math.floor((this.twitchCommandTimeouts['position'][chatter.channel][target].expires - Date.now()) / 1000)} seconds.`, chatter.channel)
+                                            this.twitchBot.say(`[${target}] Does not have twitch enabled.`, chatter.channel)
                                         }
                                     } else {
-                                        this.twitchBot.say(`[${target}] Does not have twitch enabled.`, chatter.channel)
+                                        this.twitchBot.say(`[${target}] Is not enabled.`, chatter.channel)
                                     }
                                 } else {
-                                    this.twitchBot.say(`[${target}] Is not enabled.`, chatter.channel)
+                                    this.twitchBot.say('User: @' + target.substring(1) + ' not found in DB.', chatter.channel)
                                 }
                             } else {
-                                this.twitchBot.say('User: @' + target.substring(1) + ' not found in DB.', chatter.channel)
+                                this.twitchBot.say(`[${channelUser.TWITCH_CHANNEL}] Does not have twitch enabled.`, chatter.channel)
                             }
                         } else {
-                            this.twitchBot.say(`[${channelUser.TWITCH_CHANNEL}] Does not have twitch enabled.`, chatter.channel)
+                            this.twitchBot.say(`[${channelUser.TWITCH_CHANNEL}] Is not enabled.`, chatter.channel)
                         }
                     } else {
-                        this.twitchBot.say(`[${channelUser.TWITCH_CHANNEL}] Is not enabled.`, chatter.channel)
+                        this.twitchBot.say('User: @' + channelUser.TWITCH_CHANNEL.substring(1) + ' not found in DB.', chatter.channel)
                     }
-                } else {
-                    this.twitchBot.say('User: @' + channelUser.TWITCH_CHANNEL.substring(1) + ' not found in DB.', chatter.channel)
                 }
             }
         });
@@ -307,7 +313,6 @@ export default class CryptoPositionsBot {
                     this.getMessageToEdit(user.ID).then(async message => {
                         try {
                             if (message !== undefined) {
-                                console.log(messageToSend);
                                 await message.edit(messageToSend)
                                 console.log("updated discord message for " + user.TWITCH_CHANNEL)
                             } else {
@@ -752,6 +757,11 @@ export default class CryptoPositionsBot {
         if (user) {
             user = user[1]
             user.TWITCH_ENABLED = twitchInfo.TWITCH_ENABLED;
+            if (!user.TWITCH_ENABLED) {
+                await this.connectToTwitchChannel(twitchChannel)
+            } else {
+                await this.disconnectFromTwitchChannel(twitchChannel)
+            }
             user.TWITCH_TIMEOUT = twitchInfo.TWITCH_TIMEOUT;
             user.TWITCH_TIMEOUT_EXPIRE = twitchInfo.TWITCH_TIMEOUT_EXPIRE;
             users.set(user.ID, user);
@@ -786,6 +796,9 @@ export default class CryptoPositionsBot {
                     if (!this.twitchBot.channels.some(channel => channel.toLowerCase() === user.TWITCH_CHANNEL.toLowerCase())) {
                         this.twitchBot.join(user.TWITCH_CHANNEL.toLowerCase())
                         console.log('connected to twitch channel ' + (user as User).TWITCH_CHANNEL)
+                        if(!this.twitchBot.channels.includes(user.TWITCH_CHANNEL.toLowerCase())) {
+                            this.twitchBot.channels.push(user.TWITCH_CHANNEL.toLowerCase());
+                        }
                         return true;
                     } else {
                         console.log('already connected to twitch channel ' + (user as User).TWITCH_CHANNEL)
@@ -814,6 +827,9 @@ export default class CryptoPositionsBot {
                     if (this.twitchBot.channels.some((channel: string) => channel.toLowerCase() === user.TWITCH_CHANNEL.toLowerCase())) {
                         this.twitchBot.part(user.TWITCH_CHANNEL.toLowerCase())
                         console.log('disconnected from twitch channel ' + (user as User).TWITCH_CHANNEL)
+                        if(this.twitchBot.channels.includes(user.TWITCH_CHANNEL.toLowerCase())) {
+                            this.twitchBot.channels.splice(this.twitchBot.channels.indexOf(user.TWITCH_CHANNEL.toLowerCase()), 1)
+                        }
                         return true;
                     } else {
                         console.log('not connected to twitch channel ' + (user as User).TWITCH_CHANNEL)
@@ -837,6 +853,7 @@ export default class CryptoPositionsBot {
         let user = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) === twitchChannel.toLowerCase());
         if (user) {
             user = user[1]
+            // console.log(this.twitchBot.channels);
             return (this.twitchBot.channels.some((channel: string) => channel.toLowerCase() === user.TWITCH_CHANNEL.toLowerCase()))
         }
         return false;
@@ -863,5 +880,34 @@ export default class CryptoPositionsBot {
                 return error;
             }
         }
+    }
+
+    async trySetupRefLink(twitchChannel:string, refLink: string) {
+        let user = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) === twitchChannel.toLowerCase());
+        if (user) {
+            user = user[1]
+            if (user.REF_LINK === null || user.REF_LINK === undefined) {
+                let refLinkUser = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) === refLink.toLowerCase());
+                if (refLinkUser) {
+                    user.REF_LINK = refLinkUser.TWITCH_CHANNEL.toLowerCase().substring(1);
+                    users.set(user.ID, user);
+                    return 'Ref Link set to ' + user.REF_LINK;
+                } else {
+                    return 'Could not find user with ID: ' + refLink;
+                }
+            } else {
+                return 'Ref Link already set';
+            }
+        } else {
+            return 'User not found ' + twitchChannel
+        }
+    }
+
+    async getReferrals(twitchChannel: string) {
+        return (users.all() as Array<any>).filter(([id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) !== twitchChannel.toLowerCase() && user.REF_LINK === twitchChannel.toLowerCase()).map(([id, user] : [string, User]) => {
+            return {
+                twitchChannel: user.TWITCH_CHANNEL
+            }
+        });
     }
 }

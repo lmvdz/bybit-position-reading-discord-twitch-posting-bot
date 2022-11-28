@@ -62,7 +62,7 @@
           }
         }" class="d-block text-center mx-auto mb-9"></v-avatar>
       <v-divider v-if="state.twitchUserInfo !== null"></v-divider>
-      <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.editExchangeKeys" flat
+      <!-- <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.editExchangeKeys" flat
         class="d-block text-center mx-auto mb-9" size="32px" icon="mdi-key"
         :color="state.editExchangeKeys ? 'primary' : 'secondary'"
         @click="state.editExchangeKeys = !state.editExchangeKeys" />
@@ -80,7 +80,7 @@
       <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.deleteDialog" flat
         color="error" class="d-block text-center mx-auto mb-9" size="32px" icon="mdi-trash-can"
         @click="state.deleteDialog = !state.deleteDialog" />
-      <v-divider></v-divider>
+      <v-divider></v-divider> -->
 
     </v-navigation-drawer>
 
@@ -101,7 +101,7 @@
           <v-row class="d-flex align-top justify-center">
             <v-col cols="auto">
               <!-- {{twitchUserInfo}} -->
-              <v-btn v-if="state.twitchUserInfo === null" @click="connectTwitch" color="rgb(169, 94, 171)">Connect
+              <v-btn variant="outlined" v-if="state.twitchUserInfo === null" @click="connectTwitch" color="rgb(169, 94, 171)">Connect
                 Twitch</v-btn>
             </v-col>
           </v-row>
@@ -111,7 +111,7 @@
             v-if="state.twitchUserInfo !== null && state.userInfo !== null">
             <v-col cols="auto">
               <v-checkbox label="Active" v-model="state.enabled"></v-checkbox>
-              <v-btn color="success" v-if="state.enabled !== state.userInfo.ENABLED" @click="updateEnabledState()">Save
+              <v-btn variant="outlined" color="success" v-if="state.enabled !== state.userInfo.ENABLED" @click="updateEnabledState()">Save
               </v-btn>
             </v-col>
           </v-row>
@@ -240,6 +240,9 @@ import { v4 as uuidv4 } from 'uuid'
 import validExchanges from './exchanges';
 import { computed } from '@vue/reactivity';
 
+
+const refLink = ref<string>('lmvdzande');
+const referrals = ref<Array<{ twitchChannel: string}>>([]);
 const exchangeKeysHash = ref<string>('');
 const exchangeKeys = ref<Array<ExchangeKey>>([])
 const computedExchangeKeysHash = computed(() => {
@@ -266,6 +269,8 @@ const connectedToTwitchChannel = ref<boolean>(false);
 const userInfo = ref<any>(null);
 
 const state = reactive({
+  refLink,
+  referrals,
   exchangeKeys,
   twitchAccessToken,
   twitchUserInfo,
@@ -294,14 +299,20 @@ const log = (...args: any) => {
 const connectTwitch = () => {
   console.log(window.location.host, window.location.host !== 'localhost:3000')
   if (window.location.host !== 'localhost:3000') {
-    window.location.href = (`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=z5o8ef6nmef6wbxm2h6ry6xfatvqud&redirect_uri=https://www.cryptopositionsbot.com/&scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls&state=c3ab8aa609ea11e793ae92361f002671`)
+    window.location.href = (`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=z5o8ef6nmef6wbxm2h6ry6xfatvqud&redirect_uri=https://www.cryptopositionsbot.com/&scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls&state=${state.refLink}`)
   } else {
-    window.location.href = (`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=z5o8ef6nmef6wbxm2h6ry6xfatvqud&redirect_uri=http://localhost:3000/&scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls&state=c3ab8aa609ea11e793ae92361f002671`)
+    window.location.href = (`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=z5o8ef6nmef6wbxm2h6ry6xfatvqud&redirect_uri=http://localhost:3000/&scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls&state=${state.refLink}`)
   }
 }
 
 onMounted(() => {
   if (document.location.hash) {
+    let params = (new URL(window.location.href)).searchParams;
+    if (params.has('ref')) {
+      state.refLink = params.get('ref')!;
+      console.log(state.refLink);
+
+    }
     var hash = {} as any;
     decodeURIComponent(window.location.hash.substring(1)).split('&').forEach(variable => {
       let [key, value] = variable.split('=')
@@ -311,11 +322,8 @@ onMounted(() => {
     document.location.hash = '';
     getTwitchUserInfo().then(() => {
       getUserInfo().then(() => {
-        isConnectedToChannel().then(connected => {
-          state.connectedToTwitchChannel = connected;
-        }).catch(error => {
-          console.error(error);
-        })
+        getReferrals();
+        isConnectedToTwitchChannel();
       }).catch(error => {
         console.error(error);
       })
@@ -342,9 +350,9 @@ const getUserInfo = (): Promise<void> => {
   return new Promise((resolve, reject) => {
     axios.get(`https://bot.cryptopositionsbot.com/userInfo?access_token=${state.twitchAccessToken.access_token}`).then((response) => {
       exchangeKeysHash.value = Buffer.from(JSON.stringify(response.data.EXCHANGE_KEYS), 'utf-8').toString('base64')
-      state.userInfo = response.data
+      state.userInfo = response.data;
       if (state.userInfo.EXCHANGE_KEYS.length > 0) {
-        state.exchangeKeys.push(...response.data.EXCHANGE_KEYS)
+        state.exchangeKeys.push(...response.data.EXCHANGE_KEYS);
       }
       state.discordChannelId = response.data.DISCORD_CHANNEL;
       state.discordMessageId = response.data.DISCORD_MESSAGE;
@@ -353,6 +361,38 @@ const getUserInfo = (): Promise<void> => {
       state.twitchTimeoutEnabled = response.data.TWITCH_TIMEOUT;
       state.twitchTimeoutLength = response.data.TWITCH_TIMEOUT_EXPIRE;
       state.enabled = response.data.ENABLED;
+      if ((response.data.REF_LINK === null || response.data.REF_LINK === undefined) && state.refLink !== '') {
+        trySetupRefLink().then((response) => {
+          notify(response);
+          resolve()
+        }).catch(error => {
+          console.error(error);
+        })
+      } else {
+        resolve()
+      }
+    }).catch(error => {
+      console.error(error);
+      reject(error);
+    })
+  })
+}
+
+const trySetupRefLink = () : Promise<string> => {
+  return new Promise((resolve, reject) => {
+    axios.post(`https://bot.cryptopositionsbot.com/trySetupRefLink`, { refLink: state.refLink }).then((response) => {
+      resolve(response.data)
+    }).catch(error => {
+      console.error(error);
+      reject(error);
+    })
+  })
+}
+
+const getReferrals = () : Promise<void> => {
+  return new Promise((resolve, reject) => {
+    axios.get(`https://bot.cryptopositionsbot.com/getReferrals?access_token=${state.twitchAccessToken.access_token}`).then((response) => {
+      state.referrals = response.data;
       resolve()
     }).catch(error => {
       console.error(error);
@@ -432,7 +472,12 @@ const updateUserTwitchInfo = (): Promise<void> => {
       state.userInfo.TWITCH_ENABLED = state.twitchEnabled;
       state.userInfo.TWITCH_TIMEOUT = state.twitchTimeoutEnabled;
       state.userInfo.TWITCH_TIMEOUT_EXPIRE = state.twitchTimeoutLength;
-      resolve()
+      isConnectedToTwitchChannel().then(() => {
+        resolve()
+      }).catch(error => {
+        console.error(error);
+        reject(error);
+      })
     }).catch(error => {
       console.error(error);
       reject(error);
@@ -511,12 +556,17 @@ const stop = (): Promise<void> => {
 
 const connectToTwitchChannel = (): Promise<void> => {
   return new Promise((resolve, reject) => {
-    isConnectedToChannel().then((connected) => {
+    isConnectedToTwitchChannel().then((connected) => {
       if (!connected) {
         let data = {
           access_token: state.twitchAccessToken.access_token
         }
         axios.post('https://bot.cryptopositionsbot.com/connectToTwitchChannel', data).then((response) => {
+          if (response.data === true) {
+            state.connectedToTwitchChannel = true;
+          } else {
+            notify(response.data)
+          }
           resolve(response.data)
         }).catch(error => {
           console.error(error);
@@ -531,13 +581,17 @@ const connectToTwitchChannel = (): Promise<void> => {
 
 const disconnectFromTwitchChannel = (): Promise<void> => {
   return new Promise((resolve, reject) => {
-    isConnectedToChannel().then((connected) => {
+    isConnectedToTwitchChannel().then((connected) => {
       if (connected) {
         let data = {
           access_token: state.twitchAccessToken.access_token
         }
         axios.post('https://bot.cryptopositionsbot.com/disconnectFromTwitchChannel', data).then((response) => {
-          resolve(response.data)
+          if (response.data === true) {
+            state.connectedToTwitchChannel = false;
+          } else {
+            notify(response.data)
+          }
         }).catch(error => {
           console.error(error);
           reject(error);
@@ -549,10 +603,10 @@ const disconnectFromTwitchChannel = (): Promise<void> => {
   })
 }
 
-const isConnectedToChannel = (): Promise<boolean> => {
+const isConnectedToTwitchChannel = (): Promise<boolean> => {
   return new Promise((resolve, reject) => {
-    1
-    axios.get(`https://bot.cryptopositionsbot.com/isConnectedToChannel?access_token=${state.twitchAccessToken.access_token}`).then((response) => {
+    axios.get(`https://bot.cryptopositionsbot.com/isConnectedToTwitchChannel?access_token=${state.twitchAccessToken.access_token}`).then((response) => {
+      state.connectedToTwitchChannel = response.data;
       resolve(response.data)
     }).catch(error => {
       console.error(error);

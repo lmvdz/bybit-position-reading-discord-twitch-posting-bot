@@ -139,8 +139,8 @@ app.post('/connectToTwitchChannel', cors(), (req, res) => {
                 res.send('missing access_token')
             } else {
                 getTwitchUserInfo(req.body.access_token).then((data) => {
-                    bot.connectToTwitchChannel((data as any).display_name).then(() => {
-                        res.send(true);
+                    bot.connectToTwitchChannel((data as any).display_name).then((isConnected) => {
+                        res.send(isConnected);
                     }).catch(error => {
                         console.error(error);
                         res.send(false)
@@ -164,8 +164,8 @@ app.post('/disconnectFromTwitchChannel', cors(), (req, res) => {
             res.send('missing access_token')
         } else {
             getTwitchUserInfo(req.body.access_token).then((data) => {
-                bot.disconnectFromTwitchChannel((data as any).display_name).then(() => {
-                    res.send(true);
+                bot.disconnectFromTwitchChannel((data as any).display_name).then((isDisconnected) => {
+                    res.send(isDisconnected);
                 }).catch(error => {
                     console.error(error);
                     res.send(false)
@@ -182,13 +182,13 @@ app.post('/disconnectFromTwitchChannel', cors(), (req, res) => {
 })
 
 
-app.post('/isConnectedToTwitchChannel', cors(), (req, res) => {
+app.get('/isConnectedToTwitchChannel', cors(), (req, res) => {
     
-    if (req.body !== undefined) {
-        if (req.body.access_token === undefined) {
+    if (req.query !== undefined) {
+        if (req.query.access_token === undefined) {
             res.send('missing access_token')
         } else {
-            getTwitchUserInfo(req.body.access_token).then((data) => {
+            getTwitchUserInfo(req.query.access_token).then((data) => {
                 bot.isConnectedToTwitchChannel((data as any).display_name).then((isConnected) => {
                     res.send(isConnected);
                 }).catch(error => {
@@ -213,8 +213,8 @@ app.get('/userInfo', cors(), (req, res) => {
                 res.send('missing access_token')
             } else {
                 getTwitchUserInfo(req.query.access_token).then((data) => {
-                    bot.getUserInfo((data as any).display_name).then((keys) => {
-                        res.send(keys);
+                    bot.getUserInfo((data as any).display_name).then((info) => {
+                        res.send(info);
                     }).catch(error => {
                         console.error(error);
                         res.send(false)
@@ -228,6 +228,35 @@ app.get('/userInfo', cors(), (req, res) => {
             res.send('missing access_token')
         }
     
+})
+
+app.post('/trySetupRefLink', cors(), (req, res) => {
+    if (req.query !== undefined) {
+        if (req.query.access_token === undefined) {
+            res.send('missing access_token')
+        } else {
+            getTwitchUserInfo(req.query.access_token).then((data) => {
+                bot.getUserInfo((data as any).display_name).then((info) => {
+                    if (req.query.refLink && (info.REF_LINK === null || info.REF_LINK === undefined)) {
+                        bot.trySetupRefLink((data as any).display_name, req.query.refLink).then((response) => {
+                            res.send(res.data);
+                        }).catch(error => {
+                            console.error(error);
+                            res.send(false);
+                        })
+                    }
+                }).catch(error => {
+                    console.error(error);
+                    res.send(false)
+                })
+            }).catch(error => {
+                console.error(error);
+                res.send(false);
+            })
+        }
+    } else {
+        res.send('missing access_token')
+    }
 })
 
 app.post('/userExchangeKeys', cors(), (req, res) => {
