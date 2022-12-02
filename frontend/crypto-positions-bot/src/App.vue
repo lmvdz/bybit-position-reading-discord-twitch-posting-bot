@@ -2,7 +2,9 @@
 
   <v-app id="inspire">
 
-    <v-alert closable variant="tonal" v-model="state.alert.show" :type="state.alert.type" style="z-index: 1000; position: absolute; top: 0px; right: 0px; margin: 1em;" :text="state.alert.message"></v-alert>
+    <v-alert closable variant="tonal" v-model="state.alert.show" :type="state.alert.type"
+      style="z-index: 1000; position: absolute; top: 0px; right: 0px; margin: 1em;"
+      :text="state.alert.message"></v-alert>
 
     <v-dialog v-model="logoutDialog">
       <div class="d-flex align-top justify-center">
@@ -24,7 +26,7 @@
           <v-card-subtitle>Are you sure you want to delete your user?</v-card-subtitle>
           <v-card-actions>
             <v-btn variant="outlined" @click="deleteUser()" color="error">Delete</v-btn>
-            <v-btn  variant="outlined" @click="deleteDialog = false;">Cancel</v-btn>
+            <v-btn variant="outlined" @click="deleteDialog = false;">Cancel</v-btn>
           </v-card-actions>
         </v-card>
       </div>
@@ -95,16 +97,22 @@
 
           <h1 v-if="state.twitchUserInfo === null" class="text-h3 font-weight-bold">CryptoPositionsBot</h1>
 
-          <h2 class="text-h4 font-weight-bold" v-if="state.twitchUserInfo !== null" style="color: rgb(169, 94, 171)">Logged In As: {{ state.twitchUserInfo.display_name }} <v-btn size="x-small" variant="plain" icon="mdi-share" color="success" @click="copyRefLink()"></v-btn></h2>
-          <h3 class="text-h5 font-weight-bold" v-if="state.userInfo !== null && state.userInfo.REF_LINK !== null && state.userInfo.REF_LINK !== undefined && state.userInfo.REF_LINK !== ''" style="color: rgb(148 143 149)">Referred By: {{ state.userInfo.REF_LINK }}</h3>
-          <v-text-field style="margin: 2em auto 0 auto; width: 300px;" variant="underlined" persistent-hint :hint="state.refLink.toLowerCase() === state.userInfo.TWITCH_CHANNEL.substring(1).toLowerCase() ? 'Can not refer yourself.' : 'Can not be changed once set.'" label="Referred By (Twitch Username)" v-model="state.refLink" v-if="(state.userInfo === null && state.twitchUserInfo === null ) || (state.userInfo !== null && !(state.userInfo.REF_LINK !== null && state.userInfo.REF_LINK !== undefined && state.userInfo.REF_LINK !== ''))">
-            <template v-slot:append-inner v-if="(state.userInfo !== null && !(state.userInfo.REF_LINK !== null && state.userInfo.REF_LINK !== undefined && state.userInfo.REF_LINK !== ''))">
-                <v-btn
-                  :disabled="state.refLink === '' || state.refLink === null || state.refLink === undefined || state.refLink.toLowerCase() === state.userInfo.TWITCH_CHANNEL.substring(1).toLowerCase()"
-                  @click="trySetupRefLink(state.refLink)"
-                  variant="text"
-                  icon="mdi-content-save" color="success"
-                ></v-btn>
+          <h2 class="text-h4 font-weight-bold" v-if="state.twitchUserInfo !== null" style="color: rgb(169, 94, 171)">
+            Logged In As: {{ state.twitchUserInfo.display_name }} <v-btn size="x-small" variant="plain" icon="mdi-share"
+              color="success" @click="copyRefLink()"></v-btn></h2>
+          <h3 class="text-h5 font-weight-bold"
+            v-if="state.userInfo !== null && state.userInfo.REF_LINK !== null && state.userInfo.REF_LINK !== undefined && state.userInfo.REF_LINK !== ''"
+            style="color: rgb(148 143 149)">Referred By: {{ state.userInfo.REF_LINK }}</h3>
+          <v-text-field 
+            v-if="(state.userInfo === null && state.twitchUserInfo === null) || (state.userInfo !== null && !(state.userInfo.REF_LINK !== null && state.userInfo.REF_LINK !== undefined && state.userInfo.REF_LINK !== ''))"
+            style="margin: 2em auto 0 auto; width: 300px;" variant="underlined" persistent-hint
+            :hint="state.userInfo !== null ? state.refLink.toLowerCase() === state.userInfo.TWITCH_CHANNEL.substring(1).toLowerCase() ? 'Can not refer yourself.' : 'Can not be changed once set.' : ''"
+            label="Referred By (Twitch Username)" v-model="state.refLink">
+            <template v-slot:append-inner
+              v-if="(state.userInfo !== null && !(state.userInfo.REF_LINK !== null && state.userInfo.REF_LINK !== undefined && state.userInfo.REF_LINK !== ''))">
+              <v-btn
+                :disabled="state.refLink === '' || state.refLink === null || state.refLink === undefined || state.refLink.toLowerCase() === state.userInfo.TWITCH_CHANNEL.substring(1).toLowerCase()"
+                @click="trySetupRefLink(state.refLink)" variant="text" icon="mdi-content-save" color="success"></v-btn>
             </template>
           </v-text-field>
           <div class="py-5" />
@@ -121,7 +129,8 @@
             v-if="state.twitchUserInfo !== null && state.userInfo !== null">
             <v-col cols="auto">
               <v-checkbox label="Active" v-model="state.enabled"></v-checkbox>
-              <v-btn variant="outlined" color="success" v-if="state.enabled !== state.userInfo.ENABLED" @click="updateEnabledState()">Save
+              <v-btn variant="outlined" color="success" v-if="state.enabled !== state.userInfo.ENABLED"
+                @click="updateEnabledState()">Save
               </v-btn>
             </v-col>
           </v-row>
@@ -129,8 +138,9 @@
           <v-row class="d-flex align-top justify-center"
             v-if="state.twitchUserInfo !== null && state.userInfo !== null">
             <v-col cols="auto">
-              <v-btn variant="outlined" :icon="!state.userInfo.IS_RUNNING ? 'mdi-play' : 'mdi-stop'" :disabled="!state.enabled"
-                :color="state.userInfo.IS_RUNNING ? 'error' : 'success'" v-if="state.twitchUserInfo !== null" @click="() => {
+              <v-btn variant="outlined" :icon="!state.userInfo.IS_RUNNING ? 'mdi-play' : 'mdi-stop'"
+                :disabled="!state.enabled" :color="state.userInfo.IS_RUNNING ? 'error' : 'success'"
+                v-if="state.twitchUserInfo !== null" @click="() => {
                   if (state.userInfo.IS_RUNNING) {
                     stopDialog = true;
                   } else {
@@ -187,10 +197,10 @@
                 <v-checkbox :disabled="!state.enabled" label="Discord Enabled" v-model="state.discordEnabled" />
                 <div style="margin-bottom: 2em;">
                   <v-btn color="primary" target="_blank" variant="outlined"
-                  href="https://discord.com/api/oauth2/authorize?client_id=1044389854236127262&permissions=83968&scope=bot">Invite
-                  Discord Bot</v-btn>
+                    href="https://discord.com/api/oauth2/authorize?client_id=1044389854236127262&permissions=83968&scope=bot">Invite
+                    Discord Bot</v-btn>
                 </div>
-                
+
                 <v-text-field :disabled="!state.enabled" variant="underlined" density="compact"
                   label="Discord Channel ID" v-model="state.discordChannelId"></v-text-field>
                 <v-text-field :disabled="!state.enabled" variant="underlined" density="compact"
@@ -199,7 +209,8 @@
                   <v-btn variant="outlined" style="margin: .25em;" color="success" @click="updateUserDiscordInfo()"
                     :disabled="!state.enabled || !(state.discordEnabled !== state.userInfo.DISCORD_ENABLED || state.discordChannelId !== state.userInfo.DISCORD_CHANNEL || state.discordMessageId !== state.userInfo.DISCORD_MESSAGE)">
                     Save</v-btn>
-                  <v-btn variant="outlined" :disabled="!state.enabled" style="margin: .25em;" color="error" @click="cancelDiscordChanges()"
+                  <v-btn variant="outlined" :disabled="!state.enabled" style="margin: .25em;" color="error"
+                    @click="cancelDiscordChanges()"
                     v-if="state.discordEnabled !== state.userInfo.DISCORD_ENABLED || state.discordChannelId !== state.userInfo.DISCORD_CHANNEL || state.discordMessageId !== state.userInfo.DISCORD_MESSAGE">
                     Cancel</v-btn>
                   <v-btn variant="outlined" :disabled="!state.enabled" style="margin: .25em;" color="error"
@@ -215,9 +226,11 @@
                 <h3>Twitch Settings</h3>
                 <v-checkbox :disabled="!state.enabled" label="Twitch Enabled" v-model="twitchEnabled" />
                 <v-checkbox :disabled="!state.enabled" label="Timeout Enabled" v-model="twitchTimeoutEnabled" />
-                <v-btn color="primary" style="margin-bottom: 2em;" variant="outlined" v-if="!state.connectedToTwitchChannel" @click="connectToTwitchChannel()">Connect To Twitch Channel
+                <v-btn color="primary" style="margin-bottom: 2em;" variant="outlined"
+                  v-if="!state.connectedToTwitchChannel" @click="connectToTwitchChannel()">Connect To Twitch Channel
                 </v-btn>
-                <v-btn color="error" style="margin-bottom: 2em;" variant="outlined" v-else @click="disconnectFromTwitchChannel()">Disconnect from Twitch Channel
+                <v-btn color="error" style="margin-bottom: 2em;" variant="outlined" v-else
+                  @click="disconnectFromTwitchChannel()">Disconnect from Twitch Channel
                 </v-btn>
                 <v-text-field :disabled="!state.enabled" variant="underlined" density="compact" type="number"
                   label="Timeout Length (minutes)" v-model="state.twitchTimeoutLength" />
@@ -225,7 +238,8 @@
                   <v-btn variant="outlined" style="margin: .25em;" color="success" @click="updateUserTwitchInfo()"
                     :disabled="!enabled || !(state.twitchEnabled !== userInfo.TWITCH_ENABLED || twitchTimeoutEnabled !== userInfo.TWITCH_TIMEOUT || Number.parseFloat(twitchTimeoutLength.toString()) !== Number.parseFloat(userInfo.TWITCH_TIMEOUT_EXPIRE.toString()))">
                     Save</v-btn>
-                  <v-btn variant="outlined" :disabled="!state.enabled" style="margin: .25em;" color="error" @click="cancelTwitchChanges()"
+                  <v-btn variant="outlined" :disabled="!state.enabled" style="margin: .25em;" color="error"
+                    @click="cancelTwitchChanges()"
                     v-if="state.twitchEnabled !== userInfo.TWITCH_ENABLED || twitchTimeoutEnabled !== userInfo.TWITCH_TIMEOUT || Number.parseFloat(twitchTimeoutLength.toString()) !== Number.parseFloat(userInfo.TWITCH_TIMEOUT_EXPIRE.toString())">
                     Cancel</v-btn>
                   <v-btn variant="outlined" :disabled="!state.enabled" style="margin: .25em;" color="error"
@@ -236,17 +250,17 @@
               </div>
             </v-col>
           </v-row>
-          
+
         </v-responsive>
       </v-container>
-      
+
     </v-main>
 
     <v-footer app style="max-height: 1.5em;">
       CryptoPositionsBot 2022
     </v-footer>
   </v-app>
-  
+
 </template>
 
 <script setup lang="ts">
@@ -265,10 +279,10 @@ const alert = ref<{
   message: string,
   type: AlertType
   timeout: NodeJS.Timer | null
-}>({ show: false, message: '', type: 'success', timeout: null})
+}>({ show: false, message: '', type: 'success', timeout: null })
 const refLink = ref<string>('');
 const copiedRefLink = ref<string>('');
-const referrals = ref<Array<{ twitchChannel: string}>>([]);
+const referrals = ref<Array<{ twitchChannel: string }>>([]);
 const exchangeKeysHash = ref<string>('');
 const exchangeKeys = ref<Array<ExchangeKey>>([])
 const computedExchangeKeysHash = computed(() => {
@@ -334,7 +348,7 @@ const connectTwitch = () => {
 
 const copyRefLink = () => {
   navigator.clipboard.writeText(`https://www.cryptopositionsbot.com/?ref=${state.userInfo.TWITCH_CHANNEL.toLowerCase().substring(1)}`);
-  notify("Copied ref link to clipboard", 'success')  
+  notify("Copied ref link to clipboard", 'success')
 }
 
 onMounted(() => {
@@ -391,14 +405,18 @@ const getUserInfo = (): Promise<void> => {
       state.twitchTimeoutEnabled = response.data.TWITCH_TIMEOUT;
       state.twitchTimeoutLength = response.data.TWITCH_TIMEOUT_EXPIRE;
       state.enabled = response.data.ENABLED;
-      state.refLink = response.data.REF_LINK;
-      if ((state.refLink === null || state.refLink === undefined) && state.twitchAccessToken.state !== '' && state.twitchAccessToken.state !== undefined && state.twitchAccessToken.state !== null) {
-        trySetupRefLink(state.twitchAccessToken.state).then(() => {
-          resolve();
-        }).catch(error => {
-          console.error(error);
-          reject(error);
-        })
+      state.refLink = response.data.REF_LINK || '';
+      if ((state.refLink === null || state.refLink === undefined || state.refLink === '') && state.twitchAccessToken.state !== '' && state.twitchAccessToken.state !== undefined && state.twitchAccessToken.state !== null) {
+        if (state.twitchAccessToken.state.toLowerCase() !== state.userInfo.TWITCH_CHANNEL.toLowerCase().substring(1)) {
+          trySetupRefLink(state.twitchAccessToken.state).then(() => {
+            resolve();
+          }).catch(error => {
+            console.error(error);
+            reject(error);
+          })
+        } else {
+          notify("Cannot refer yourself " + state.userInfo.TWITCH_CHANNEL, 'error');
+        }
       } else {
         resolve();
       }
@@ -409,9 +427,9 @@ const getUserInfo = (): Promise<void> => {
   })
 }
 
-const trySetupRefLink = (refLink: string) : Promise<void> => {
+const trySetupRefLink = (refLink: string): Promise<void> => {
   return new Promise((resolve, reject) => {
-    if(confirm('Are you sure you want to set your referral to: ' + refLink)) {
+    if (confirm('Are you sure you want to set your referral to: ' + refLink)) {
       axios.post(`https://bot.cryptopositionsbot.com/trySetupRefLink`, { access_token: state.twitchAccessToken.access_token, refLink: refLink }).then((response) => {
         if (response.data === true) {
           state.refLink = refLink
@@ -426,12 +444,14 @@ const trySetupRefLink = (refLink: string) : Promise<void> => {
       }).catch(error => {
         console.error(error);
         reject(error);
-      })            
+      })
+    } else {
+      resolve();
     }
   })
 }
 
-const getReferrals = () : Promise<void> => {
+const getReferrals = (): Promise<void> => {
   return new Promise((resolve, reject) => {
     axios.get(`https://bot.cryptopositionsbot.com/referrals?access_token=${state.twitchAccessToken.access_token}`).then((response) => {
       state.referrals = response.data;
@@ -504,7 +524,7 @@ const updateUserDiscordInfo = (): Promise<void> => {
       } else {
         notify("Failed to update user discord info", 'error');
       }
-      
+
       resolve()
     }).catch(error => {
       notify("Failed to update user discord info", 'error');
