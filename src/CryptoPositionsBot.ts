@@ -25,6 +25,7 @@ interface User {
     DISCORD_ENABLED: boolean
     LAST_UPDATE: string
     ENABLED: boolean
+    REF_LINK: string
     IS_RUNNING: boolean
 }
 
@@ -147,11 +148,11 @@ export default class CryptoPositionsBot {
                                                 // check for timeout enabled, and user sending the command isn't the channel owner
                                                 if (channelUser.TWITCH_TIMEOUT && (channelUser as User).TWITCH_CHANNEL.toLowerCase().substring(1) !== chatter.username.toLowerCase()) {
                                                     this.twitchCommandTimeouts['position'][chatter.channel][target].timedout = true;
-                                                    this.twitchCommandTimeouts['position'][chatter.channel][target].expires = Date.now() + (channelUser.TWITCH_TIMEOUT_EXPIRE * 1000 * 60);
+                                                    this.twitchCommandTimeouts['position'][chatter.channel][target].expires = Date.now() + (Number.parseFloat(channelUser.TWITCH_TIMEOUT_EXPIRE) * 1000 * 60);
                 
                                                     setTimeout(() => {
                                                         this.twitchCommandTimeouts['position'][chatter.channel][target].timedout = false;
-                                                    }, channelUser.TWITCH_TIMEOUT_EXPIRE * 1000 * 60)
+                                                    }, Number.parseFloat(channelUser.TWITCH_TIMEOUT_EXPIRE) * 1000 * 60)
                                                 }
                 
                                                 let updateTime = targetUser.LAST_UPDATE;
@@ -763,7 +764,7 @@ export default class CryptoPositionsBot {
                 await this.disconnectFromTwitchChannel(twitchChannel)
             }
             user.TWITCH_TIMEOUT = twitchInfo.TWITCH_TIMEOUT;
-            user.TWITCH_TIMEOUT_EXPIRE = twitchInfo.TWITCH_TIMEOUT_EXPIRE;
+            user.TWITCH_TIMEOUT_EXPIRE = Number.parseFloat(twitchInfo.TWITCH_TIMEOUT_EXPIRE.toString());
             users.set(user.ID, user);
             console.log('updated ' + user.TWITCH_CHANNEL + '\'s twitch info');
             return true;
@@ -882,23 +883,33 @@ export default class CryptoPositionsBot {
         }
     }
 
-    async trySetupRefLink(twitchChannel:string, refLink: string) {
+    async trySetupRefLink(twitchChannel:string, refLink: string) : Promise<string | boolean> {
         let user = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) === twitchChannel.toLowerCase());
         if (user) {
-            user = user[1]
+            user = user[1];
             if (user.REF_LINK === null || user.REF_LINK === undefined) {
                 let refLinkUser = (users.all() as Array<any>).find(([id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) === refLink.toLowerCase());
+                refLinkUser = refLinkUser[1];
                 if (refLinkUser) {
-                    user.REF_LINK = refLinkUser.TWITCH_CHANNEL.toLowerCase().substring(1);
-                    users.set(user.ID, user);
-                    return 'Ref Link set to ' + user.REF_LINK;
+                    if (refLinkUser.ID !== user.ID) {
+                        user.REF_LINK = refLinkUser.TWITCH_CHANNEL.toLowerCase().substring(1);
+                        users.set(user.ID, user);
+                        console.log("Successfully set referral for " + user.TWITCH_CHANNEL + " to " + refLink.toLowerCase())
+                        return true;
+                    } else {
+                        console.log("Cannot refer yourself: " + user.TWITCH_CHANNEL);
+                        return "Cannot refer yourself: " + user.TWITCH_CHANNEL;
+                    }
                 } else {
-                    return 'Could not find user with ID: ' + refLink;
+                    console.log("Failed to set referral for " + user.TWITCH_CHANNEL +", user with twitch channel not found: " + refLink)
+                    return 'Could not find user with twitch channel: ' + refLink;
                 }
             } else {
-                return 'Ref Link already set';
+                console.log("Failed to set referral for " + user.TWITCH_CHANNEL +", ref link already set to: " + user.REF_LINK)
+                return "Failed to set referral for " + user.TWITCH_CHANNEL +", ref link already set to: " + user.REF_LINK;
             }
         } else {
+            console.log('User not found ' + twitchChannel)
             return 'User not found ' + twitchChannel
         }
     }

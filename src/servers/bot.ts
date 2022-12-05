@@ -231,15 +231,15 @@ app.get('/userInfo', cors(), (req, res) => {
 })
 
 app.post('/trySetupRefLink', cors(), (req, res) => {
-    if (req.query !== undefined) {
-        if (req.query.access_token === undefined) {
+    if (req.body !== undefined) {
+        if (req.body.access_token === undefined) {
             res.send('missing access_token')
         } else {
-            getTwitchUserInfo(req.query.access_token).then((data) => {
+            getTwitchUserInfo(req.body.access_token).then((data) => {
                 bot.getUserInfo((data as any).display_name).then((info) => {
-                    if (req.query.refLink && (info.REF_LINK === null || info.REF_LINK === undefined)) {
-                        bot.trySetupRefLink((data as any).display_name, req.query.refLink).then((response) => {
-                            res.send(res.data);
+                    if (req.body.refLink && (info.REF_LINK === null || info.REF_LINK === undefined)) {
+                        bot.trySetupRefLink((data as any).display_name, req.body.refLink).then((response) => {
+                            res.send(response);
                         }).catch(error => {
                             console.error(error);
                             res.send(false);
@@ -252,6 +252,28 @@ app.post('/trySetupRefLink', cors(), (req, res) => {
             }).catch(error => {
                 console.error(error);
                 res.send(false);
+            })
+        }
+    } else {
+        res.send('missing access_token')
+    }
+})
+
+app.get('/referrals', cors(), (req, res) => {
+    if (req.query !== undefined) {
+        if (req.query.access_token === undefined) {
+            res.send('missing access_token')
+        } else {
+            getTwitchUserInfo(req.query.access_token).then((data) => {
+                bot.getReferrals((data as any).display_name).then((response) => {
+                    res.send(response);
+                }).catch(error => {
+                    console.error(error);
+                    res.status(500).send(error);
+                })
+            }).catch(error => {
+                console.error(error);
+                res.status(500).send(error);
             })
         }
     } else {
