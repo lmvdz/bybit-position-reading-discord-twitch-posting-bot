@@ -291,12 +291,18 @@ import { stat } from 'fs';
 
 type AlertType = "success" | "error" | "warning" | "info" | undefined
 
+
+
 const alert = ref<{
   show: boolean,
   message: string,
   type: AlertType
   timeout: NodeJS.Timer | null
 }>({ show: false, message: '', type: 'success', timeout: null })
+const twitchExtensionEnabled = ref<boolean>(false);
+const twitchExtensionHelixToken = ref<any>(null);
+
+
 const refLink = ref<string>('');
 const copiedRefLink = ref<string>('');
 const referrals = ref<Array<{ twitchChannel: string }>>([]);
@@ -326,6 +332,8 @@ const connectedToTwitchChannel = ref<boolean>(false);
 const userInfo = ref<any>(null);
 
 const state = reactive({
+  twitchExtensionEnabled,
+  twitchExtensionHelixToken,
   alert,
   copiedRefLink,
   refLink,
@@ -350,6 +358,13 @@ const state = reactive({
   stopDialog,
   connectedToTwitchChannel
 })
+
+//@ts-ignore
+window.Twitch.ext.onAuthorized((auth: any) => {
+  state.twitchExtensionEnabled = true;
+  state.twitchExtensionHelixToken = auth.helixToken;
+  console.log('The Helix JWT is ', auth.helixToken);
+});
 
 const log = (...args: any) => {
   console.log(...args)
