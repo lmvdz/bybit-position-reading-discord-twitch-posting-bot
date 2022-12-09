@@ -56,7 +56,7 @@ app.post("/addUser", cors(), (req, res) => {
             } else if (req.body.access_token === undefined) {
                 res.send('missing access_token')
             } else {
-                getTwitchUserInfo(req.body.access_token).then((data) => {
+                getTwitchUserInfo(req.body.access_token, req.body.is_helix, req.body.client_id, req.body.user_id).then((data) => {
                     bot.addUser(req.body.exchangeKeys, req.body.discord_channel_id, (data as any).display_name).then(() => {
                         res.send(true);
                     }).catch(error => {
@@ -83,7 +83,7 @@ app.post('/removeUser', cors(), (req, res) => {
             if (req.body.access_token === undefined) {
                 res.send('missing access_token')
             } else {
-                getTwitchUserInfo(req.body.access_token).then((data) => {
+                getTwitchUserInfo(req.body.access_token, req.body.is_helix, req.body.client_id, req.body.user_id).then((data) => {
                     bot.removeUser((data as any).display_name).then(() => {
                         res.send(true);
                     }).catch(error => {
@@ -107,7 +107,7 @@ app.post('/enableUser', cors(), (req, res) => {
             if (req.body.access_token === undefined) {
                 res.send('missing access_token')
             } else {
-                getTwitchUserInfo(req.body.access_token).then((data) => {
+                getTwitchUserInfo(req.body.access_token, req.body.is_helix, req.body.client_id, req.body.user_id).then((data) => {
                     bot.enableUser((data as any).display_name).then(() => {
                         res.send(true);
                     }).catch(error => {
@@ -131,7 +131,7 @@ app.post('/disableUser', cors(), (req, res) => {
             if (req.body.access_token === undefined) {
                 res.send('missing access_token')
             } else {
-                getTwitchUserInfo(req.body.access_token).then((data) => {
+                getTwitchUserInfo(req.body.access_token, req.body.is_helix, req.body.client_id, req.body.user_id).then((data) => {
                     bot.disableUser((data as any).display_name).then(() => {
                         res.send(true);
                     }).catch(error => {
@@ -155,7 +155,7 @@ app.post('/connectToTwitchChannel', cors(), (req, res) => {
             if (req.body.access_token === undefined) {
                 res.send('missing access_token')
             } else {
-                getTwitchUserInfo(req.body.access_token).then((data) => {
+                getTwitchUserInfo(req.body.access_token, req.body.is_helix, req.body.client_id, req.body.user_id).then((data) => {
                     bot.connectToTwitchChannel((data as any).display_name).then((isConnected) => {
                         res.send(isConnected);
                     }).catch(error => {
@@ -180,7 +180,7 @@ app.post('/disconnectFromTwitchChannel', cors(), (req, res) => {
         if (req.body.access_token === undefined) {
             res.send('missing access_token')
         } else {
-            getTwitchUserInfo(req.body.access_token).then((data) => {
+            getTwitchUserInfo(req.body.access_token, req.body.is_helix, req.body.client_id, req.body.user_id).then((data) => {
                 bot.disconnectFromTwitchChannel((data as any).display_name).then((isDisconnected) => {
                     res.send(isDisconnected);
                 }).catch(error => {
@@ -205,7 +205,7 @@ app.get('/isConnectedToTwitchChannel', cors(), (req, res) => {
         if (req.query.access_token === undefined) {
             res.send('missing access_token')
         } else {
-            getTwitchUserInfo(req.query.access_token as string).then((data) => {
+            getTwitchUserInfo(req.query.access_token as string, req.query.is_helix, req.query.client_id, req.query.user_id).then((data) => {
                 bot.isConnectedToTwitchChannel((data as any).display_name).then((isConnected) => {
                     res.send(isConnected);
                 }).catch(error => {
@@ -229,7 +229,7 @@ app.get('/userInfo', cors(), (req, res) => {
             if (req.query.access_token === undefined) {
                 res.send('missing access_token')
             } else {
-                getTwitchUserInfo(req.query.access_token as string).then((data) => {
+                getTwitchUserInfo(req.query.access_token as string, req.query.is_helix, req.query.client_id, req.query.user_id).then((data) => {
                     bot.getUserInfo((data as any).display_name).then((info) => {
                         res.send(info);
                     }).catch(error => {
@@ -252,7 +252,7 @@ app.post('/trySetupRefLink', cors(), (req, res) => {
         if (req.body.access_token === undefined) {
             res.send('missing access_token')
         } else {
-            getTwitchUserInfo(req.body.access_token).then((data) => {
+            getTwitchUserInfo(req.body.access_token, req.body.is_helix, req.body.client_id, req.body.user_id).then((data) => {
                 bot.getUserInfo((data as any).display_name).then((info) => {
                     if (req.body.refLink && (info.REF_LINK === null || info.REF_LINK === undefined)) {
                         bot.trySetupRefLink((data as any).display_name, req.body.refLink).then((response) => {
@@ -281,7 +281,7 @@ app.get('/referrals', cors(), (req, res) => {
         if (req.query.access_token === undefined) {
             res.send('missing access_token')
         } else {
-            getTwitchUserInfo(req.query.access_token as string).then((data) => {
+            getTwitchUserInfo(req.query.access_token as string, req.query.is_helix, req.query.client_id, req.query.user_id).then((data) => {
                 bot.getReferrals((data as any).display_name).then((response) => {
                     res.send(response);
                 }).catch(error => {
@@ -304,7 +304,7 @@ app.post('/userExchangeKeys', cors(), (req, res) => {
             if (req.body.access_token === undefined) {
                 res.send('missing access_token')
             } else {
-                getTwitchUserInfo(req.body.access_token).then((data) => {
+                getTwitchUserInfo(req.body.access_token, req.body.is_helix, req.body.client_id, req.body.user_id).then((data) => {
                     bot.updateUserExchangeKeys((data as any).display_name, req.body.exchangeKeys).then((response) => {
                         res.send(response);
                     }).catch(error => {
@@ -328,7 +328,7 @@ app.post('/userDiscordInfo', cors(), (req, res) => {
             if (req.body.access_token === undefined) {
                 res.send('missing access_token')
             } else {
-                getTwitchUserInfo(req.body.access_token).then((data) => {
+                getTwitchUserInfo(req.body.access_token, req.body.is_helix, req.body.client_id, req.body.user_id).then((data) => {
                     bot.updateUserDiscordInfo((data as any).display_name, req.body.discordInfo).then((response) => {
                         res.send(response);
                     }).catch(error => {
@@ -352,7 +352,7 @@ app.post('/userTwitchInfo', cors(), (req, res) => {
             if (req.body.access_token === undefined) {
                 res.send('missing access_token')
             } else {
-                getTwitchUserInfo(req.body.access_token).then((data) => {
+                getTwitchUserInfo(req.body.access_token, req.body.is_helix, req.body.client_id, req.body.user_id).then((data) => {
                     bot.updateUserTwitchInfo((data as any).display_name, req.body.twitchInfo).then((response) => {
                         res.send(response);
                     }).catch(error => {
@@ -376,7 +376,7 @@ app.post('/start', cors(), (req, res) => {
             if (req.body.access_token === undefined) {
                 res.send('missing access_token')
             } else {
-                getTwitchUserInfo(req.body.access_token).then((data) => {
+                getTwitchUserInfo(req.body.access_token, req.body.is_helix, req.body.client_id, req.body.user_id).then((data) => {
                     bot.start((data as any).display_name).then((response) => {
                         res.send(response);
                     }).catch(error => {
@@ -400,7 +400,7 @@ app.post('/stop', cors(), (req, res) => {
             if (req.body.access_token === undefined) {
                 res.send('missing access_token')
             } else {
-                getTwitchUserInfo(req.body.access_token).then((data) => {
+                getTwitchUserInfo(req.body.access_token, req.body.is_helix, req.body.client_id, req.body.user_id).then((data) => {
                     bot.stop((data as any).display_name).then((response) => {
                         res.send(response);
                     }).catch(error => {
@@ -424,7 +424,7 @@ app.post('/userEnabled', cors(), (req, res) => {
             if (req.body.access_token === undefined) {
                 res.send('missing access_token')
             } else {
-                getTwitchUserInfo(req.body.access_token).then((data) => {
+                getTwitchUserInfo(req.body.access_token, req.body.is_helix, req.body.client_id, req.body.user_id).then((data) => {
                     bot.updateUserEnabled((data as any).display_name, req.body.enabled).then((response) => {
                         res.send(response);
                     }).catch(error => {
@@ -442,9 +442,12 @@ app.post('/userEnabled', cors(), (req, res) => {
     
 })
 
-const getTwitchUserInfo = (access_token: string, isHelix: boolean = false) => {
+const getTwitchUserInfo = (access_token: string, is_helix: string = 'false', client_id?: string, user_id?: string) => {
     return new Promise((resolve, reject) => {
-        axios.get('https://api.twitch.tv/helix/users', { headers: { "Authorization": `${isHelix ? 'Extension' : 'Bearer'} ${access_token}`, "Client-Id": process.env.TWITCH_APP_CLIENT_ID}}).then((response) => {
+        axios.get(`https://api.twitch.tv/helix/users${user_id !== 'undefined' && user_id !== undefined ? '?id='+user_id : ''}`, { 
+            headers: { "Authorization": `${(is_helix === 'true' || (is_helix as unknown as boolean) === true) ? 'Extension' : 'Bearer'} ${access_token}`, 
+            "Client-Id": (client_id !== 'undefined' && client_id !== undefined) ? client_id : process.env.TWITCH_APP_CLIENT_ID}
+        }).then((response) => {
             resolve(response.data.data[0])
         }).catch(error => {
             console.error(error);
@@ -459,7 +462,7 @@ app.get('/twitchUserInfo', cors(), (req, res) => {
             if (req.query.access_token === undefined) {
                 res.send('missing access_token')
             } else {
-                getTwitchUserInfo(req.query.access_token as string, (req.query.isHelix !== undefined && new Boolean(req.query.isHelix).valueOf() === true) as boolean).then((data) => {
+                getTwitchUserInfo(req.query.access_token as string, req.query.is_helix, req.query.client_id, req.query.user_id).then((data) => {
                     res.send(data)
                 }).catch(error => {
                     console.error(error);
