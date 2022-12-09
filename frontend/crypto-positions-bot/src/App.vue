@@ -94,7 +94,7 @@
           <template v-slot:activator="{ props }">
             <v-btn style="margin-right: 1em;" v-bind="props" key="chat" icon v-if="state.twitchUserInfo !== null" :active="state.editTwitchInfo" flat size="32px" :color="state.editTwitchInfo ? 'success' : 'warning'" 
             @click="state.editTwitchInfo = !state.editTwitchInfo; state.editDiscordInfo = false; state.editExchangeKeys = false;">
-              <v-img style="width: 32px; height: 32px" :src="getAsset('./assets/TwitchGlitchBlackOps.png')"></v-img>
+              <v-img style="width: 32px; height: 32px" :src="twitchImage"></v-img>
             </v-btn>
           </template>
         </v-tooltip>
@@ -103,7 +103,7 @@
           <template v-slot:activator="{ props }">
             <v-btn style="margin-right: 1em;" v-bind="props" key="forum" icon v-if="state.twitchUserInfo !== null" :active="state.editDiscordInfo" flat size="32px" :color="state.editDiscordInfo ? 'success' : 'warning'" 
             @click="state.editDiscordInfo = !state.editDiscordInfo; state.editExchangeKeys = false; state.editTwitchInfo = false;">
-              <v-img style="width: 32px; height: 32px" :src="getAsset('./assets/discord-mark-white.png')"></v-img>
+              <v-img style="width: 32px; height: 32px" :src="discordImage"></v-img>
             </v-btn>
           </template>
         </v-tooltip>
@@ -134,27 +134,30 @@
         }" class="d-block text-center mx-auto mb-9"></v-avatar>
       <v-divider v-if="state.twitchUserInfo !== null"></v-divider>
       
+      
+
+      <v-divider v-if="state.twitchUserInfo !== null"></v-divider>
+      <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.editTwitchInfo" flat
+        class="d-block text-center mx-auto mb-9" size="32px" icon="mdi-chat"
+        @click="state.editTwitchInfo = !state.editTwitchInfo; state.editDiscordInfo = false; state.editExchangeKeys = false;" >
+        <v-img style="width: 32px; height: 32px" :src="twitchImage"></v-img>
+      </v-btn>
+
+      <v-divider v-if="state.twitchUserInfo !== null"></v-divider>
+      <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.editDiscordInfo" flat
+        class="d-block text-center mx-auto mb-9" size="32px" icon
+        @click="state.editDiscordInfo = !state.editDiscordInfo; state.editTwitchInfo = false; state.editExchangeKeys = false;">
+        <v-img :style="`width: 32px; height: 32px;`" :src="discordImage"></v-img>
+      </v-btn>
+
       <v-btn 
         variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.editExchangeKeys" flat
         class="d-block text-center mx-auto mb-9" size="32px" icon="mdi-key"
         @click="state.editExchangeKeys = !state.editExchangeKeys; state.editTwitchInfo = false; state.editDiscordInfo = false;" >
       </v-btn>
 
-
-      <v-divider v-if="state.twitchUserInfo !== null"></v-divider>
-      <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.editDiscordInfo" flat
-        class="d-block text-center mx-auto mb-9" size="32px" icon
-        @click="state.editDiscordInfo = !state.editDiscordInfo; state.editTwitchInfo = false; state.editExchangeKeys = false;">
-        <v-img :style="`width: 32px; height: 32px;`" :src="getAsset('./assets/discord-mark-white.png')"></v-img>
-      </v-btn>
-
         
-      <v-divider v-if="state.twitchUserInfo !== null"></v-divider>
-      <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.editTwitchInfo" flat
-        class="d-block text-center mx-auto mb-9" size="32px" icon="mdi-chat"
-        @click="state.editTwitchInfo = !state.editTwitchInfo; state.editDiscordInfo = false; state.editExchangeKeys = false;" >
-        <v-img style="width: 32px; height: 32px" :src="getAsset('./assets/TwitchGlitchBlackOps.png')"></v-img>
-      </v-btn>
+      
 
       <v-divider v-if="state.twitchUserInfo !== null"></v-divider>
       <!-- <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.deleteDialog" flat
@@ -381,7 +384,8 @@ import { computed } from '@vue/reactivity';
 
 type AlertType = "success" | "error" | "warning" | "info" | undefined
 
-
+const twitchImage = new URL('./assets/TwitchGlitchBlackOps.png', import.meta.url).href
+const discordImage = new URL('./assets/discord-mark-white.png', import.meta.url).href
 
 const alert = ref<{
   show: boolean,
@@ -447,10 +451,6 @@ const state = reactive({
   stopDialog,
   connectedToTwitchChannel
 })
-
-const getAsset = (src: string) => {
-  return new URL(src, import.meta.url).href
-}
 
 //@ts-ignore
 window.Twitch.ext.onAuthorized((auth: any) => {
