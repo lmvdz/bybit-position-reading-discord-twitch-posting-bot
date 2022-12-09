@@ -24,6 +24,7 @@ import db from 'secure-db';
 import { v4 as uuidv4 } from 'uuid';
 import qs from 'qs'
 import tmi from 'tmi.js'
+import jsonwebtoken from 'jsonwebtoken'
 //@ts-ignore
 import ccxt, { Market } from 'ccxt'
 
@@ -145,12 +146,13 @@ export default class CryptoPositionsBot {
             }
 
             let target = null
+            
 
             if (message === '!position' || message === '!positions') {
                 target = channel.toLowerCase()
             } else if ((message.startsWith('!position @') || message.startsWith('!positions @')) && (!message.startsWith('!position @<') || !message.startsWith('!positions @<'))) {
                 target = "#" + message.substring(message.indexOf("@") + 1).split(" ")[0].toLowerCase()
-            } else if (message.startsWith('!position help') || message.startsWith('!positions help')) {
+            } else if (message.startsWith('!position help') || message.startsWith('!positions help') || message === ('@cryptopositionsbot').toLowerCase()) {
                 this.twitchBot.client.say(channel, '!position(s) - get the current channel\'s positions. !position(s) @<user> - get the user\'s positions.')
             }
 
@@ -225,7 +227,7 @@ export default class CryptoPositionsBot {
             let updateTime = targetUser.LAST_UPDATE;
 
             let positions = this.positions.get(targetUser.ID);
-            if (positions) {
+            if (!positions) {
                 this.twitchBot.client.say(channel, `[${target}] Positions haven't been loaded yet. (${updateTime})`)
                 return;
 
@@ -238,6 +240,7 @@ export default class CryptoPositionsBot {
                     formattedMessage.push(`[${target}] [${exchangeId}] ${(position.side) === 'long' ? '🟩 LONG ' : (position.side) === 'short' ? '🟥 SHORT ' : ''} ${(position.contracts * position.contractSize)} ${position.symbol} @ ${Number.parseFloat(Number.parseFloat(position.entryPrice).toFixed(2)).toLocaleString('en-US')} uPnL: ${Number.parseFloat(Number.parseFloat(position.unrealizedPnl).toFixed(4)).toLocaleString('en-US')} liq @ ${Number.parseFloat(Number.parseFloat(position.liquidationPrice).toFixed(2)).toLocaleString('en-US')}`)
                 });
             })
+
             if (!(formattedMessage.length > 1)) {
                 this.twitchBot.client.say(channel, `[${target}] No Positions Open (${updateTime})`)
                 return;
@@ -252,11 +255,10 @@ export default class CryptoPositionsBot {
 
         console.log('twitch bot listening to events');
 
-        this.twitchBot.client.connect().then(([x, y]) => {
-            console.log(x, y);
+        this.twitchBot.client.connect().then(([_host, _port]) => {
             [...users.all().filter(([_id, user]) => (user as User).TWITCH_ENABLED).map(([_id, user]) => user.TWITCH_CHANNEL)].flat(Number.POSITIVE_INFINITY).forEach(channel => {
-                this.twitchBot.client.join(channel.toLowerCase())
-            })
+                this.twitchBot.client.join(channel.toLowerCase());
+            });
         }).catch(error => {
             console.error(error);
         })
@@ -436,9 +438,8 @@ export default class CryptoPositionsBot {
         }
 
         if (!user.IS_RUNNING) {
-            console.log('started ' + user.TWITCH_CHANNEL + '.')
-            user.IS_RUNNING = true;
-            users.set(user.ID, user);
+            console.log('user ' + (user as User).TWITCH_CHANNEL + ' not Running, stopping loop.');
+            return;
         }
         
 
@@ -497,8 +498,13 @@ export default class CryptoPositionsBot {
             console.error('failed to start ' + twitchChannel + ' userIndex was -1')
             return false;
         }
+
+        console.log('started ' + user.TWITCH_CHANNEL + '.')
+        user.IS_RUNNING = true;
+        users.set(user.ID, user);
         
         this.loopFetch(user.ID, userIndex);
+        
         return true;
         
     }
@@ -651,6 +657,7 @@ export default class CryptoPositionsBot {
         }));
     }
 
+    
     getTwitchToken(): Promise<string> {
         return new Promise((resolve, reject) => {
             if (!(this.twitch_token.expires_at < Date.now() || this.twitch_token.access_token === undefined)) {
@@ -674,6 +681,7 @@ export default class CryptoPositionsBot {
             })
         })
     }
+
 
 
     getTwitchUserInfo(userID: string): Promise<TwitchUserInfo> {

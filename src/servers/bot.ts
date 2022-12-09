@@ -475,6 +475,10 @@ app.get('/twitchUserInfo', cors(), (req, res) => {
     
 })
 
+app.get('/login', cors(), (req, res) => {
+    res.redirect(`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=${process.env.TWITCH_APP_CLIENT_ID}&redirect_uri=${req.query.redirect_uri}&state=${req.query.refLink}`)
+})
+
 app.listen(3216, () => {
     console.log("bybit position bot server started on port 3216")
 })
