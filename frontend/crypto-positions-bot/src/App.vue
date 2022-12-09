@@ -281,7 +281,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted } from 'vue';
+import { reactive, ref, onMounted, watch } from 'vue';
 import axios from 'axios'
 //@ts-ignore
 import { v4 as uuidv4 } from 'uuid'
@@ -300,8 +300,6 @@ const alert = ref<{
   timeout: NodeJS.Timer | null
 }>({ show: false, message: '', type: 'success', timeout: null })
 const twitchExtensionEnabled = ref<boolean>(false);
-const twitchExtensionHelixToken = ref<any>(null);
-
 
 const refLink = ref<string>('');
 const copiedRefLink = ref<string>('');
@@ -333,7 +331,6 @@ const userInfo = ref<any>(null);
 
 const state = reactive({
   twitchExtensionEnabled,
-  twitchExtensionHelixToken,
   alert,
   copiedRefLink,
   refLink,
@@ -361,10 +358,29 @@ const state = reactive({
 
 //@ts-ignore
 window.Twitch.ext.onAuthorized((auth: any) => {
+  state.twitchAccessToken.access_token = auth.helixToken;
   state.twitchExtensionEnabled = true;
-  state.twitchExtensionHelixToken = auth.helixToken;
   console.log('The Helix JWT is ', auth.helixToken);
 });
+
+watch(() => [state.twitchExtensionEnabled, state.twitchAccessToken], (current, old) => {
+  
+  if (current[0] && current[1] !== null && current[1] !== undefined) {
+    console.log(current[1])
+    console.log('getting twitch user info')
+    getTwitchUserInfo().then(() => {
+      getUserInfo().then(() => {
+        getReferrals();
+        isConnectedToTwitchChannel();
+      }).catch(error => {
+        console.error(error);
+      })
+    }).catch(error => {
+      console.error(error);
+    })
+  }
+})
+
 
 const log = (...args: any) => {
   console.log(...args)
@@ -384,7 +400,8 @@ const copyRefLink = () => {
 }
 
 onMounted(() => {
-  if (document.location.hash) {
+
+  if (document.location.hash && !state.twitchExtensionEnabled) {
     var hash = {} as any;
     decodeURIComponent(window.location.hash.substring(1)).split('&').forEach(variable => {
       let [key, value] = variable.split('=')
@@ -403,6 +420,7 @@ onMounted(() => {
       console.error(error);
     })
   }
+
   let params = (new URL(window.location.href)).searchParams;
   if (params.has('ref')) {
     state.refLink = params.get('ref')!;
