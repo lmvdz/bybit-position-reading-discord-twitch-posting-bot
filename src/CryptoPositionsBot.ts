@@ -23,6 +23,7 @@ import TwitchBot from 'twitch-bot';
 import db from 'secure-db';
 import { v4 as uuidv4 } from 'uuid';
 import qs from 'qs'
+//@ts-ignore
 import ccxt, { Market } from 'ccxt'
 
 

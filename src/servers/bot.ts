@@ -442,9 +442,9 @@ app.post('/userEnabled', cors(), (req, res) => {
     
 })
 
-const getTwitchUserInfo = (access_token: string) => {
+const getTwitchUserInfo = (access_token: string, isHelix: boolean = false) => {
     return new Promise((resolve, reject) => {
-        axios.get('https://api.twitch.tv/helix/users', { headers: { "Authorization": `Bearer ${access_token}`, "Client-Id": process.env.TWITCH_APP_CLIENT_ID}}).then((response) => {
+        axios.get('https://api.twitch.tv/helix/users', { headers: { "Authorization": `${isHelix ? 'Extension' : 'Bearer'} ${access_token}`, "Client-Id": process.env.TWITCH_APP_CLIENT_ID}}).then((response) => {
             resolve(response.data.data[0])
         }).catch(error => {
             console.error(error);
@@ -459,7 +459,7 @@ app.get('/twitchUserInfo', cors(), (req, res) => {
             if (req.query.access_token === undefined) {
                 res.send('missing access_token')
             } else {
-                getTwitchUserInfo(req.query.access_token as string).then((data) => {
+                getTwitchUserInfo(req.query.access_token as string, (req.query.isHelix !== undefined && new Boolean(req.query.isHelix).valueOf() === true) as boolean).then((data) => {
                     res.send(data)
                 }).catch(error => {
                     console.error(error);
