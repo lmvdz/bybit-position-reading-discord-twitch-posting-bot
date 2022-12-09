@@ -150,16 +150,13 @@
         <v-img :style="`width: 32px; height: 32px;`" :src="discordImage"></v-img>
       </v-btn>
 
+      <v-divider v-if="state.twitchUserInfo !== null"></v-divider>
       <v-btn 
         variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.editExchangeKeys" flat
         class="d-block text-center mx-auto mb-9" size="32px" icon="mdi-key"
         @click="state.editExchangeKeys = !state.editExchangeKeys; state.editTwitchInfo = false; state.editDiscordInfo = false;" >
       </v-btn>
-
-        
       
-
-      <v-divider v-if="state.twitchUserInfo !== null"></v-divider>
       <!-- <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.deleteDialog" flat
         color="error" class="d-block text-center mx-auto mb-9" size="32px" icon="mdi-trash-can"
         @click="state.deleteDialog = !state.deleteDialog;" />
