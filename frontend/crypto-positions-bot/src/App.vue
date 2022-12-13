@@ -75,12 +75,11 @@
       </div>
     </v-dialog>
 
-    <v-app-bar color="teal-darken-4" :style="`${(state.twitchExtensionEnabled && state.twitchAccessToken.channel_id !== undefined && state.twitchAccessToken.channel_id === state.twitchUserInfo.id) ? 'width: 150px;' : 'width: 50px;'} border-radius: 0 0 30px 0;`" :elevation="0" v-if="(state.twitchExtensionEnabled && state.twitchUserInfo !== null && state.userInfo.ENABLED !== undefined && state.userInfo.ENABLED)">
+    <v-app-bar color="teal-darken-4" :style="`width: 250px; border-radius: 0 0 30px 0;`" :elevation="0"
+      v-if="(state.twitchExtensionEnabled && state.twitchUserInfo !== null && state.userInfo.ENABLED !== undefined && state.userInfo.ENABLED)">
 
       <template v-slot:image>
-          <v-img
-            gradient="to top right, rgba(25,25,25,.8), rgba(50,50,50,.8)"
-          ></v-img>
+        <v-img gradient="to top right, rgba(25,25,25,.8), rgba(50,50,50,.8)"></v-img>
       </template>
       <!-- <v-avatar style="margin-top: 1em; cursor: pointer;" :color="`grey-darken-1`"
         :image="state.twitchUserInfo !== null ? state.twitchUserInfo.profile_image_url : ''" :size="36" @click="() => {
@@ -89,43 +88,48 @@
           }
         }" class="d-block text-center mx-auto mb-9"></v-avatar> -->
 
-        
-        <v-tooltip text="Twitch Info" location="bottom">
-          <template v-slot:activator="{ props }">
-            <v-btn style="margin-right: 1em;" v-bind="props" key="chat" icon v-if="state.twitchUserInfo !== null" :active="state.editTwitchInfo" flat size="32px" :color="state.editTwitchInfo ? 'success' : 'warning'" 
+
+      <v-tooltip text="Twitch Info" location="bottom">
+        <template v-slot:activator="{ props }">
+          <v-btn style="margin-right: 1em;" v-bind="props" key="chat" icon v-if="state.twitchUserInfo !== null"
+            :active="state.editTwitchInfo" flat :color="state.editTwitchInfo ? 'success' : 'warning'"
             @click="state.editTwitchInfo = !state.editTwitchInfo; state.editDiscordInfo = false; state.editExchangeKeys = false;">
-              <v-img style="width: 32px; height: 32px" :src="twitchImage"></v-img>
-            </v-btn>
-          </template>
-        </v-tooltip>
+            <v-img style="width: 28px; height: 28px" :src="twitchImage"></v-img>
+          </v-btn>
+        </template>
+      </v-tooltip>
 
-        <v-tooltip text="Discord Info" location="bottom">
-          <template v-slot:activator="{ props }">
-            <v-btn style="margin-right: 1em;" v-bind="props" key="forum" icon v-if="state.twitchUserInfo !== null" :active="state.editDiscordInfo" flat size="32px" :color="state.editDiscordInfo ? 'success' : 'warning'" 
+      <v-tooltip text="Discord Info" location="bottom">
+        <template v-slot:activator="{ props }">
+          <v-btn style="margin-right: 1em;" v-bind="props" key="forum" icon v-if="state.twitchUserInfo !== null"
+            :active="state.editDiscordInfo" flat :color="state.editDiscordInfo ? 'success' : 'warning'"
             @click="state.editDiscordInfo = !state.editDiscordInfo; state.editExchangeKeys = false; state.editTwitchInfo = false;">
-              <v-img style="width: 32px; height: 32px" :src="discordImage"></v-img>
-            </v-btn>
-          </template>
-        </v-tooltip>
+            <v-img style="width: 28px; height: 28px" :src="discordImage"></v-img>
+          </v-btn>
+        </template>
+      </v-tooltip>
 
-        <v-tooltip text="Exchange Keys" location="bottom">
-          <template v-slot:activator="{ props }">
-            <v-btn v-bind="props" key="key" icon v-if="state.twitchUserInfo !== null" :active="state.editExchangeKeys" flat size="32px" :color="state.editExchangeKeys ? 'success' : 'warning'" 
-            @click="state.editExchangeKeys = !state.editExchangeKeys; state.editDiscordInfo = false; state.editTwitchInfo = false;" >
-              <v-icon>mdi-key</v-icon>
-            </v-btn>
-          </template>
-        </v-tooltip>
+      <v-tooltip text="Exchange Keys" location="bottom">
+        <template v-slot:activator="{ props }">
+          <v-btn style="margin-right: 1em;" v-bind="props" key="key" icon v-if="state.twitchUserInfo !== null"
+            :active="state.editExchangeKeys" flat size="32px" :color="state.editExchangeKeys ? 'success' : 'warning'"
+            @click="state.editExchangeKeys = !state.editExchangeKeys; state.editDiscordInfo = false; state.editTwitchInfo = false;">
+            <v-icon>mdi-key</v-icon>
+          </v-btn>
+        </template>
+      </v-tooltip>
 
-        <v-tooltip text="Exchange Keys" location="bottom">
-          <template v-slot:activator="{ props }">
-            <v-btn v-bind="props" size="x-small" variant="plain" icon="mdi-share" color="success" @click="copyRefLink()"></v-btn>
-          </template>
-        </v-tooltip>
-        
+      <v-tooltip text="Copy Ref Link" location="bottom">
+        <template v-slot:activator="{ props }">
+          <v-btn v-bind="props" size="32px" variant="plain" icon="mdi-share" color="success"
+            @click="copyRefLink()"></v-btn>
+        </template>
+      </v-tooltip>
+
     </v-app-bar>
 
-    <v-navigation-drawer app model-value class="pt-4" rail v-if="state.twitchUserInfo !== null && !state.twitchExtensionEnabled" permanent>
+    <v-navigation-drawer app model-value class="pt-4" rail
+      v-if="state.twitchUserInfo !== null && !state.twitchExtensionEnabled" permanent>
       <v-avatar style="margin-top: 1em; cursor: pointer;" :color="`grey-darken-1`"
         :image="state.twitchUserInfo !== null ? state.twitchUserInfo.profile_image_url : ''" :size="36" @click="() => {
           if (state.twitchUserInfo !== null) {
@@ -133,30 +137,29 @@
           }
         }" class="d-block text-center mx-auto mb-9"></v-avatar>
       <v-divider v-if="state.twitchUserInfo !== null"></v-divider>
-      
-      
+
+
 
       <v-divider v-if="state.twitchUserInfo !== null"></v-divider>
-      <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.editTwitchInfo" flat
-        class="d-block text-center mx-auto mb-9" size="32px" icon="mdi-chat"
-        @click="state.editTwitchInfo = !state.editTwitchInfo; state.editDiscordInfo = false; state.editExchangeKeys = false;" >
+      <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null"
+        :active="state.editTwitchInfo" flat class="d-block text-center mx-auto mb-9" size="32px" icon="mdi-chat"
+        @click="state.editTwitchInfo = !state.editTwitchInfo; state.editDiscordInfo = false; state.editExchangeKeys = false;">
         <v-img style="width: 32px; height: 32px" :src="twitchImage"></v-img>
       </v-btn>
 
       <v-divider v-if="state.twitchUserInfo !== null"></v-divider>
-      <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.editDiscordInfo" flat
-        class="d-block text-center mx-auto mb-9" size="32px" icon
+      <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null"
+        :active="state.editDiscordInfo" flat class="d-block text-center mx-auto mb-9" size="32px" icon
         @click="state.editDiscordInfo = !state.editDiscordInfo; state.editTwitchInfo = false; state.editExchangeKeys = false;">
         <v-img :style="`width: 32px; height: 32px;`" :src="discordImage"></v-img>
       </v-btn>
 
       <v-divider v-if="state.twitchUserInfo !== null"></v-divider>
-      <v-btn 
-        variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.editExchangeKeys" flat
-        class="d-block text-center mx-auto mb-9" size="32px" icon="mdi-key"
-        @click="state.editExchangeKeys = !state.editExchangeKeys; state.editTwitchInfo = false; state.editDiscordInfo = false;" >
+      <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null"
+        :active="state.editExchangeKeys" flat class="d-block text-center mx-auto mb-9" size="32px" icon="mdi-key"
+        @click="state.editExchangeKeys = !state.editExchangeKeys; state.editTwitchInfo = false; state.editDiscordInfo = false;">
       </v-btn>
-      
+
       <!-- <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.deleteDialog" flat
         color="error" class="d-block text-center mx-auto mb-9" size="32px" icon="mdi-trash-can"
         @click="state.deleteDialog = !state.deleteDialog;" />
@@ -173,7 +176,8 @@
 
           <h1 v-if="(state.twitchUserInfo === null)" class="text-h3 font-weight-bold">CryptoPositionsBot</h1>
 
-          <h2 class="text-h4 font-weight-bold" v-if="(state.twitchUserInfo !== null && !state.twitchExtensionEnabled)" style="color: rgb(169, 94, 171)">
+          <h2 class="text-h4 font-weight-bold" v-if="(state.twitchUserInfo !== null && !state.twitchExtensionEnabled)"
+            style="color: rgb(169, 94, 171)">
             Logged In As: {{ state.twitchUserInfo.display_name }} <v-btn size="x-small" variant="plain" icon="mdi-share"
               color="success" @click="copyRefLink()"></v-btn></h2>
           <h3 class="text-h5 font-weight-bold"
@@ -192,7 +196,8 @@
             </template>
           </v-text-field>
 
-          <div class="py-5" v-if="(!state.twitchExtensionEnabled || (state.twitchExtensionEnabled && !state.editDiscordInfo && !state.editTwitchInfo && !state.editExchangeKeys))" />
+          <div class="py-5"
+            v-if="(!state.twitchExtensionEnabled || (state.twitchExtensionEnabled && !state.editDiscordInfo && !state.editTwitchInfo && !state.editExchangeKeys))" />
 
           <v-row class="d-flex align-top justify-center" v-if="state.twitchUserInfo === null">
             <v-col cols="auto">
@@ -202,10 +207,11 @@
             </v-col>
           </v-row>
 
-          
-          <v-row class="d-flex align-top justify-center" v-if="state.twitchUserInfo !== null && state.userInfo !== null && (!state.twitchExtensionEnabled || (state.twitchExtensionEnabled && !state.editDiscordInfo && !state.editTwitchInfo && !state.editExchangeKeys))">
+
+          <v-row class="d-flex align-top justify-center"
+            v-if="state.twitchUserInfo !== null && state.userInfo !== null && (!state.twitchExtensionEnabled || (state.twitchExtensionEnabled && !state.editDiscordInfo && !state.editTwitchInfo && !state.editExchangeKeys))">
             <v-col cols="auto">
-              <div v-if="!state.twitchExtensionEnabled || (state.twitchExtensionEnabled && state.twitchAccessToken.channel_id !== undefined && state.twitchAccessToken.channel_id === state.twitchUserInfo.id && !state.editDiscordInfo && !state.editTwitchInfo && !state.editExchangeKeys )">
+              <div v-if="!state.editDiscordInfo && !state.editTwitchInfo && !state.editExchangeKeys">
                 <v-checkbox :label="(() => {
                   if (state.userInfo.ENABLED) {
                     if (state.enabled === state.userInfo.ENABLED) {
@@ -228,18 +234,22 @@
             </v-col>
           </v-row>
 
-          <v-row class="d-flex align-top justify-center" v-if="state.twitchUserInfo !== null && state.userInfo !== null && (!state.twitchExtensionEnabled || (state.twitchExtensionEnabled && !state.editDiscordInfo && !state.editTwitchInfo && !state.editExchangeKeys))">
+          <v-row class="d-flex align-top justify-center"
+            v-if="state.twitchUserInfo !== null && state.userInfo !== null && (!state.twitchExtensionEnabled || (state.twitchExtensionEnabled && !state.editDiscordInfo && !state.editTwitchInfo && !state.editExchangeKeys))">
             <v-col cols="auto">
-              <div v-if="state.userInfo.ENABLED && (!state.twitchExtensionEnabled || (state.twitchExtensionEnabled && state.twitchAccessToken.channel_id !== undefined && state.twitchAccessToken.channel_id === state.twitchUserInfo.id && !state.editDiscordInfo && !state.editTwitchInfo && !state.editExchangeKeys))">
-                <v-tooltip :text="`${state.userInfo.IS_RUNNING ? 'Stop Bot from pulling data' : 'Start Bot from pulling data'}`" location="bottom">
+              <div v-if="!state.editDiscordInfo && !state.editTwitchInfo && !state.editExchangeKeys">
+                <v-tooltip
+                  :text="`${state.userInfo.IS_RUNNING ? 'Stop Bot from pulling data' : 'Start Bot from pulling data'}`"
+                  location="bottom">
                   <template v-slot:activator="{ props }">
                     <!-- <v-btn style="margin-right: 1em;" v-bind="props" key="chat" icon v-if="state.twitchUserInfo !== null" :active="state.editTwitchInfo" flat size="32px" :color="state.editTwitchInfo ? 'success' : 'warning'" @click="state.editTwitchInfo = !state.editTwitchInfo">
                       <v-icon>mdi-chat</v-icon> 
                     </v-btn> -->
 
-                    <v-btn v-bind="props" variant="outlined" :icon="!state.userInfo.IS_RUNNING ? 'mdi-play' : 'mdi-stop'"
-                      :disabled="!state.enabled" :color="state.userInfo.IS_RUNNING ? 'error' : 'success'"
-                      v-if="state.twitchUserInfo !== null" @click="() => {
+                    <v-btn v-bind="props" variant="outlined"
+                      :icon="!state.userInfo.IS_RUNNING ? 'mdi-play' : 'mdi-stop'" :disabled="!state.enabled"
+                      :color="state.userInfo.IS_RUNNING ? 'error' : 'success'" v-if="state.twitchUserInfo !== null"
+                      @click="() => {
                         if (state.userInfo.IS_RUNNING) {
                           stopDialog = true;
                         } else {
@@ -253,33 +263,42 @@
             </v-col>
           </v-row>
 
-          <v-row class="d-flex align-top justify-center" v-if="state.twitchUserInfo !== null && state.userInfo !== null">
+          <v-row class="d-flex align-top justify-center"
+            v-if="state.twitchUserInfo !== null && state.userInfo !== null">
             <v-col cols="auto" :style="state.twitchExtensionEnabled ? 'width: 100%' : ''" v-if="state.editExchangeKeys">
-              <div :style="`${state.twitchExtensionEnabled ? '' : 'margin-top: 1em;' } padding: 1em; ${state.twitchExtensionEnabled ? 'background-color: rgba(255, 255, 255, 0.01)' : ''}`" class="overflow-y-auto" v-if="state.editExchangeKeys">
+              <div
+                :style="`${state.twitchExtensionEnabled ? '' : 'margin-top: 1em;'} padding: 1em; ${state.twitchExtensionEnabled ? 'background-color: rgba(255, 255, 255, 0.01)' : ''}`"
+                class="overflow-y-auto" v-if="state.editExchangeKeys">
                 <h3>Exchange Keys</h3>
                 <p style="margin-top: 1em;" v-for="(exchangeKey, index) in state.exchangeKeys"
                   :key="'exchangeKey-' + index">
-                <p style="margin-bottom: 1em;">#{{ index + 1 }} - {{ exchangeKey.EXCHANGE_ID }} <v-icon :style="!state.enabled ? 'cursor: default;' : 'cursor: pointer;'" @click="state.enabled ? state.exchangeKeyOpen[index] = !state.exchangeKeyOpen[index] : ''">{{ state.exchangeKeyOpen[index] === true ? 'mdi-chevron-down' : 'mdi-chevron-up'}}</v-icon></p>
-                  <div v-if="state.exchangeKeyOpen[index]">
-                    <v-autocomplete :disabled="!enabled" variant="underlined" style="height: auto" density="compact"
-                      label="EXCHANGE" :items="validExchanges" v-model="exchangeKey.EXCHANGE_ID"></v-autocomplete>
-                    <v-text-field :disabled="!enabled" variant="underlined" density="compact" label="DESCRIPTION"
-                      v-model="exchangeKey.DESCRIPTION"></v-text-field>
-                    <v-text-field :disabled="!enabled" variant="underlined" density="compact" label="API KEY"
-                      v-model="exchangeKey.API_KEY" type="password"></v-text-field>
-                    <v-text-field :disabled="!enabled" variant="underlined" density="compact" label="API SECRET"
-                      v-model="exchangeKey.API_SECRET" type="password"></v-text-field>
-                    <v-btn variant="outlined" :disabled="!enabled" :style="`margin-bottom: 2em; ${state.twitchExtensionEnabled ? 'font-size: .75em' : ''}`" color="error"
-                      @click="() => { state.exchangeKeys.splice(index, 1) }">Remove Exchange API Key #{{ index + 1 }}
-                    </v-btn>
-                  </div>
-                  <v-divider></v-divider>
+                <p style="margin-bottom: 1em;">#{{ index + 1 }} - {{ exchangeKey.EXCHANGE_ID }} <v-icon
+                    :style="!state.enabled ? 'cursor: default;' : 'cursor: pointer;'"
+                    @click="state.enabled ? state.exchangeKeyOpen[index] = !state.exchangeKeyOpen[index] : ''">{{
+                        state.exchangeKeyOpen[index] === true ? 'mdi-chevron-down' : 'mdi-chevron-up'
+                    }}</v-icon></p>
+                <div v-if="state.exchangeKeyOpen[index]">
+                  <v-autocomplete :disabled="!enabled" variant="underlined" style="height: auto" density="compact"
+                    label="EXCHANGE" :items="validExchanges" v-model="exchangeKey.EXCHANGE_ID"></v-autocomplete>
+                  <v-text-field :disabled="!enabled" variant="underlined" density="compact" label="DESCRIPTION"
+                    v-model="exchangeKey.DESCRIPTION"></v-text-field>
+                  <v-text-field :disabled="!enabled" variant="underlined" density="compact" label="API KEY"
+                    v-model="exchangeKey.API_KEY" type="password"></v-text-field>
+                  <v-text-field :disabled="!enabled" variant="underlined" density="compact" label="API SECRET"
+                    v-model="exchangeKey.API_SECRET" type="password"></v-text-field>
+                  <v-btn variant="outlined" :disabled="!enabled"
+                    :style="`margin-bottom: 2em; ${state.twitchExtensionEnabled ? 'font-size: .75em' : ''}`"
+                    color="error" @click="() => { state.exchangeKeys.splice(index, 1) }">Remove Exchange API Key #{{
+                        index + 1
+                    }}
+                  </v-btn>
+                </div>
+                <v-divider></v-divider>
                 </p>
                 <p class="d-flex align-top justify-center" style="margin-top: .5em;">
-                  <v-btn variant="outlined" :disabled="!enabled" color="primary"
-                    @click="() => {
-                      state.exchangeKeyOpen[state.exchangeKeys.push({ KEY_ID: uuidv4(), EXCHANGE_ID: '', API_KEY: '', API_SECRET: '', DESCRIPTION: '' }) - 1] = true;
-                    }">
+                  <v-btn variant="outlined" :disabled="!enabled" color="primary" @click="() => {
+                    state.exchangeKeyOpen[state.exchangeKeys.push({ KEY_ID: uuidv4(), EXCHANGE_ID: '', API_KEY: '', API_SECRET: '', DESCRIPTION: '' }) - 1] = true;
+                  }">
                     Add Exchange API Key</v-btn>
                 </p>
               </div>
@@ -297,13 +316,14 @@
               </div>
             </v-col>
             <v-col cols="auto" :style="state.twitchExtensionEnabled ? 'width: 100%' : ''" v-if="state.editDiscordInfo">
-              <div :style="`margin-top: 1em; max-height: 400px; min-width: ${state.twitchExtensionEnabled ? '0' : '400px'}; padding: 1em;`" class="overflow-y-auto"
-                v-if="state.editDiscordInfo">
+              <div
+                :style="`margin-top: 1em; min-width: ${state.twitchExtensionEnabled ? '0' : '400px'}; padding: 1em;`"
+                class="overflow-y-auto" v-if="state.editDiscordInfo">
                 <h3>Discord Settings</h3>
                 <v-checkbox :disabled="!state.enabled" label="Discord Enabled" v-model="state.discordEnabled" />
                 <div style="margin-bottom: 2em;">
                   <v-btn :disabled="!state.enabled" color="primary" target="_blank" variant="outlined"
-                    href="https://discord.com/api/oauth2/authorize?client_id=1044389854236127262&permissions=83968&scope=bot">Invite
+                    href="https://bot.cryptopositions.bot/discord-bot-invite">Invite
                     Discord Bot</v-btn>
                 </div>
 
@@ -311,48 +331,55 @@
                   label="Discord Channel ID" v-model="state.discordChannelId"></v-text-field>
                 <v-text-field :disabled="!state.enabled" variant="underlined" density="compact"
                   label="Discord Message ID" v-model="state.discordMessageId"></v-text-field>
+                <v-autocomplete multiple chips variant="underlined" density="compact" label="Discord Shared Properties" :items="sharedProperties"
+                  v-model="state.discordSharedProperties"></v-autocomplete>
                 <p>
                   <v-btn variant="outlined" style="margin: .25em;" color="success" @click="updateUserDiscordInfo()"
-                    :disabled="!state.enabled || !(state.discordEnabled !== state.userInfo.DISCORD_ENABLED || state.discordChannelId !== state.userInfo.DISCORD_CHANNEL || state.discordMessageId !== state.userInfo.DISCORD_MESSAGE)">
+                    :disabled="!state.enabled || !(state.discordEnabled !== state.userInfo.DISCORD_ENABLED || state.discordChannelId !== state.userInfo.DISCORD_CHANNEL || state.discordMessageId !== state.userInfo.DISCORD_MESSAGE || state.discordSharedProperties.length !== state.userInfo.DISCORD_SHARED_PROPERTIES.length || discordSharedPropertiesHash !== computedDiscordSharedPropertyHash)">
                     Save</v-btn>
                   <v-btn variant="outlined" :disabled="!state.enabled" style="margin: .25em;" color="error"
                     @click="cancelDiscordChanges()"
-                    v-if="state.discordEnabled !== state.userInfo.DISCORD_ENABLED || state.discordChannelId !== state.userInfo.DISCORD_CHANNEL || state.discordMessageId !== state.userInfo.DISCORD_MESSAGE">
+                    v-if="state.discordEnabled !== state.userInfo.DISCORD_ENABLED || state.discordChannelId !== state.userInfo.DISCORD_CHANNEL || state.discordMessageId !== state.userInfo.DISCORD_MESSAGE || state.discordSharedProperties.length !== state.userInfo.DISCORD_SHARED_PROPERTIES.length || discordSharedPropertiesHash !== computedDiscordSharedPropertyHash">
                     Cancel</v-btn>
                   <v-btn variant="outlined" :disabled="!state.enabled" style="margin: .25em;" color="error"
                     @click="state.editDiscordInfo = !state.editDiscordInfo"
-                    v-if="state.discordEnabled === state.userInfo.DISCORD_ENABLED && state.discordChannelId === state.userInfo.DISCORD_CHANNEL && state.discordMessageId === state.userInfo.DISCORD_MESSAGE">
+                    v-if="state.discordEnabled === state.userInfo.DISCORD_ENABLED && state.discordChannelId === state.userInfo.DISCORD_CHANNEL && state.discordMessageId === state.userInfo.DISCORD_MESSAGE && state.discordSharedProperties.length === state.userInfo.DISCORD_SHARED_PROPERTIES.length && discordSharedPropertiesHash === computedDiscordSharedPropertyHash">
                     Close</v-btn>
                 </p>
               </div>
             </v-col>
             <v-col cols="auto" :style="state.twitchExtensionEnabled ? 'width: 100%' : ''" v-if="state.editTwitchInfo">
-              <div :style="`margin-top: 1em; max-height: 400px; min-width: ${state.twitchExtensionEnabled ? '0' : '400px'}; padding: 1em;`" class="overflow-y-auto"
-                v-if="state.editTwitchInfo">
+              <div
+                :style="`margin-top: 1em; min-width: ${state.twitchExtensionEnabled ? '0' : '400px'}; padding: 1em;`"
+                class="overflow-y-auto" v-if="state.editTwitchInfo">
                 <h3>Twitch Settings</h3>
                 <v-checkbox :disabled="!state.enabled" label="Twitch Enabled" v-model="twitchEnabled" />
                 <v-checkbox :disabled="!state.enabled" label="Timeout Enabled" v-model="twitchTimeoutEnabled" />
-                <div v-if="!state.twitchExtensionEnabled || (state.twitchExtensionEnabled && state.twitchAccessToken.channel_id !== undefined && state.twitchAccessToken.channel_id === state.twitchUserInfo.id )">
+                <div>
                   <v-btn color="primary" style="margin-bottom: 2em;" variant="outlined"
                     v-if="!state.connectedToTwitchChannel" @click="connectToTwitchChannel()">Connect To Twitch Channel
                   </v-btn>
-                  <v-btn :disabled="!state.enabled" color="error" :style="`margin-bottom: 2em; ${state.twitchExtensionEnabled ? 'font-size: .75em' : ''}`" variant="outlined" v-else @click="disconnectFromTwitchChannel()">Disconnect Twitch Channel
+                  <v-btn :disabled="!state.enabled" color="error"
+                    :style="`margin-bottom: 2em; ${state.twitchExtensionEnabled ? 'font-size: .75em' : ''}`"
+                    variant="outlined" v-else @click="disconnectFromTwitchChannel()">Disconnect Twitch Channel
                   </v-btn>
                 </div>
-                
+
                 <v-text-field :disabled="!state.enabled" variant="underlined" density="compact" type="number"
                   label="Command Timeout Length (minutes)" v-model="state.twitchTimeoutLength" />
+                <v-autocomplete multiple chips variant="underlined" density="compact" label="Twitch Shared Properties" :items="sharedProperties"
+                  v-model="state.twitchSharedProperties"></v-autocomplete>
                 <p>
                   <v-btn variant="outlined" style="margin: .25em;" color="success" @click="updateUserTwitchInfo()"
-                    :disabled="!enabled || !(state.twitchEnabled !== userInfo.TWITCH_ENABLED || twitchTimeoutEnabled !== userInfo.TWITCH_TIMEOUT || Number.parseFloat(twitchTimeoutLength.toString()) !== Number.parseFloat(userInfo.TWITCH_TIMEOUT_EXPIRE.toString()))">
+                    :disabled="!state.enabled || !(state.twitchEnabled !== userInfo.TWITCH_ENABLED || twitchTimeoutEnabled !== userInfo.TWITCH_TIMEOUT || Number.parseFloat(twitchTimeoutLength.toString()) !== Number.parseFloat(userInfo.TWITCH_TIMEOUT_EXPIRE.toString()) || state.twitchSharedProperties.length !== state.userInfo.TWITCH_SHARED_PROPERTIES.length || twitchSharedPropertiesHash !== computedTwitchSharedPropertyHash)">
                     Save</v-btn>
                   <v-btn variant="outlined" :disabled="!state.enabled" style="margin: .25em;" color="error"
                     @click="cancelTwitchChanges()"
-                    v-if="state.twitchEnabled !== userInfo.TWITCH_ENABLED || twitchTimeoutEnabled !== userInfo.TWITCH_TIMEOUT || Number.parseFloat(twitchTimeoutLength.toString()) !== Number.parseFloat(userInfo.TWITCH_TIMEOUT_EXPIRE.toString())">
+                    v-if="state.twitchEnabled !== userInfo.TWITCH_ENABLED || twitchTimeoutEnabled !== userInfo.TWITCH_TIMEOUT || Number.parseFloat(twitchTimeoutLength.toString()) !== Number.parseFloat(userInfo.TWITCH_TIMEOUT_EXPIRE.toString()) || state.twitchSharedProperties.length !== state.userInfo.TWITCH_SHARED_PROPERTIES.length || twitchSharedPropertiesHash !== computedTwitchSharedPropertyHash">
                     Cancel</v-btn>
                   <v-btn variant="outlined" :disabled="!state.enabled" style="margin: .25em;" color="error"
                     @click="state.editTwitchInfo = !state.editTwitchInfo"
-                    v-if="!(twitchEnabled !== userInfo.TWITCH_ENABLED || twitchTimeoutEnabled !== userInfo.TWITCH_TIMEOUT || Number.parseFloat(twitchTimeoutLength.toString()) !== Number.parseFloat(userInfo.TWITCH_TIMEOUT_EXPIRE.toString()))">
+                    v-if="!(twitchEnabled !== userInfo.TWITCH_ENABLED || twitchTimeoutEnabled !== userInfo.TWITCH_TIMEOUT || Number.parseFloat(twitchTimeoutLength.toString()) !== Number.parseFloat(userInfo.TWITCH_TIMEOUT_EXPIRE.toString()) || state.twitchSharedProperties.length !== state.userInfo.TWITCH_SHARED_PROPERTIES.length || twitchSharedPropertiesHash !== computedTwitchSharedPropertyHash)">
                     Close</v-btn>
                 </p>
               </div>
@@ -402,13 +429,13 @@ const computedExchangeKeysHash = computed(() => {
 })
 const twitchAccessToken = ref<any>({})
 const twitchUserInfo = ref<any>(null);
-const editExchangeKeys = ref<boolean>(true);
-const editDiscordInfo = ref<boolean>(true);
+const editExchangeKeys = ref<boolean>(false);
+const editDiscordInfo = ref<boolean>(false);
 const deleteDialog = ref<boolean>(false);
 const logoutDialog = ref<boolean>(false);
 const startDialog = ref<boolean>(false);
 const stopDialog = ref<boolean>(false);
-const editTwitchInfo = ref<boolean>(true);
+const editTwitchInfo = ref<boolean>(false);
 const discordChannelId = ref<string>('');
 const discordMessageId = ref<string>('');
 const enabled = ref<boolean>(false);
@@ -416,6 +443,16 @@ const discordEnabled = ref<boolean>(false);
 const twitchEnabled = ref<boolean>(false);
 const twitchTimeoutEnabled = ref<boolean>(false);
 const twitchTimeoutLength = ref<number>(5);
+const twitchSharedProperties = ref<Array<SharedProperty>>(new Array<SharedProperty>());
+const twitchSharedPropertiesHash = ref<string>('');
+const computedTwitchSharedPropertyHash = computed(() => {
+  return Buffer.from(JSON.stringify(twitchSharedProperties.value), 'utf-8').toString('base64')
+})
+const discordSharedProperties = ref<Array<SharedProperty>>(new Array<SharedProperty>());
+const discordSharedPropertiesHash = ref<string>('');
+const computedDiscordSharedPropertyHash = computed(() => {
+  return Buffer.from(JSON.stringify(discordSharedProperties.value), 'utf-8').toString('base64')
+})
 const connectedToTwitchChannel = ref<boolean>(false);
 const exchangeKeyOpen = ref<Array<boolean>>(new Array<boolean>());
 
@@ -441,6 +478,8 @@ const state = reactive({
   twitchEnabled,
   twitchTimeoutEnabled,
   twitchTimeoutLength,
+  twitchSharedProperties,
+  discordSharedProperties,
   userInfo,
   deleteDialog,
   logoutDialog,
@@ -557,9 +596,17 @@ const getUserInfo = (): Promise<void> => {
   return new Promise((resolve, reject) => {
     axios.get(`https://bot.cryptopositionsbot.com/userInfo?access_token=${state.twitchAccessToken.access_token}&is_helix=${state.twitchExtensionEnabled}&client_id=${state.twitchAccessToken.client_id}&user_id=${state.twitchAccessToken.user_id}`).then((response) => {
       exchangeKeysHash.value = Buffer.from(JSON.stringify(response.data.EXCHANGE_KEYS), 'utf-8').toString('base64')
+      twitchSharedPropertiesHash.value = Buffer.from(JSON.stringify(response.data.TWITCH_SHARED_PROPERTIES), 'utf-8').toString('base64')
+      discordSharedPropertiesHash.value = Buffer.from(JSON.stringify(response.data.DISCORD_SHARED_PROPERTIES), 'utf-8').toString('base64')
       state.userInfo = response.data;
       if (state.userInfo.EXCHANGE_KEYS.length > 0) {
         state.exchangeKeys.push(...response.data.EXCHANGE_KEYS);
+      }
+      if (state.userInfo.TWITCH_SHARED_PROPERTIES.length > 0) {
+        state.twitchSharedProperties.push(...response.data.TWITCH_SHARED_PROPERTIES);
+      }
+      if (state.userInfo.DISCORD_SHARED_PROPERTIES.length > 0) {
+        state.discordSharedProperties.push(...response.data.DISCORD_SHARED_PROPERTIES);
       }
       state.discordChannelId = response.data.DISCORD_CHANNEL;
       state.discordMessageId = response.data.DISCORD_MESSAGE;
@@ -570,7 +617,7 @@ const getUserInfo = (): Promise<void> => {
       state.enabled = response.data.ENABLED;
       state.refLink = response.data.REF_LINK || '';
       if (
-        (state.refLink === null || state.refLink === undefined || state.refLink === '') && 
+        (state.refLink === null || state.refLink === undefined || state.refLink === '') &&
         state.twitchAccessToken.state !== '' && state.twitchAccessToken.state !== undefined && state.twitchAccessToken.state !== null
       ) {
         if (state.twitchAccessToken.state.toLowerCase() !== state.userInfo.TWITCH_CHANNEL.toLowerCase().substring(1)) {
@@ -685,13 +732,15 @@ const updateUserDiscordInfo = (): Promise<void> => {
       is_helix: state.twitchExtensionEnabled,
       client_id: state.twitchAccessToken.client_id,
       user_id: state.twitchAccessToken.user_id,
-      discordInfo: { DISCORD_CHANNEL: state.discordChannelId, DISCORD_MESSAGE: state.discordMessageId, DISCORD_ENABLED: state.discordEnabled }
+      discordInfo: { DISCORD_CHANNEL: state.discordChannelId, DISCORD_MESSAGE: state.discordMessageId, DISCORD_ENABLED: state.discordEnabled, DISCORD_SHARED_PROPERTIES: state.discordSharedProperties }
     }
     axios.post(`https://bot.cryptopositionsbot.com/userDiscordInfo`, data).then((response) => {
       if (response.data === true) {
         state.userInfo.DISCORD_CHANNEL = state.discordChannelId;
         state.userInfo.DISCORD_MESSAGE = state.discordMessageId;
         state.userInfo.DISCORD_ENABLED = state.discordEnabled;
+        state.userInfo.DISCORD_SHARED_PROPERTIES = state.discordSharedProperties;
+        discordSharedPropertiesHash.value = Buffer.from(JSON.stringify(state.discordSharedProperties), 'utf-8').toString('base64')
         notify("Updated user discord info", 'success');
       } else {
         notify("Failed to update user discord info", 'error');
@@ -713,7 +762,7 @@ const updateUserTwitchInfo = (): Promise<void> => {
       is_helix: state.twitchExtensionEnabled,
       client_id: state.twitchAccessToken.client_id,
       user_id: state.twitchAccessToken.user_id,
-      twitchInfo: { TWITCH_ENABLED: state.twitchEnabled, TWITCH_TIMEOUT: state.twitchTimeoutEnabled, TWITCH_TIMEOUT_EXPIRE: state.twitchTimeoutLength }
+      twitchInfo: { TWITCH_ENABLED: state.twitchEnabled, TWITCH_TIMEOUT: state.twitchTimeoutEnabled, TWITCH_TIMEOUT_EXPIRE: state.twitchTimeoutLength, TWITCH_SHARED_PROPERTIES: state.twitchSharedProperties }
     }
     axios.post(`https://bot.cryptopositionsbot.com/userTwitchInfo`, data).then((response) => {
       if (response.data === true) {
@@ -721,6 +770,8 @@ const updateUserTwitchInfo = (): Promise<void> => {
         state.userInfo.TWITCH_ENABLED = state.twitchEnabled;
         state.userInfo.TWITCH_TIMEOUT = state.twitchTimeoutEnabled;
         state.userInfo.TWITCH_TIMEOUT_EXPIRE = state.twitchTimeoutLength;
+        state.userInfo.TWITCH_SHARED_PROPERTIES = state.twitchSharedProperties;
+        twitchSharedPropertiesHash.value = Buffer.from(JSON.stringify(state.twitchSharedProperties), 'utf-8').toString('base64')
         isConnectedToTwitchChannel().then(() => {
           resolve()
         }).catch(error => {
@@ -928,15 +979,22 @@ interface User {
   EXCHANGE_KEYS: Array<ExchangeKey>
   DISCORD_CHANNEL: string
   DISCORD_MESSAGE: string
+  DISCORD_SHARED_PROPERTIES: Array<SharedProperty>
   TWITCH_CHANNEL: string
   TWITCH_ENABLED: boolean
   TWITCH_TIMEOUT: boolean
   TWITCH_TIMEOUT_EXPIRE: number
+  TWITCH_SHARED_PROPERTIES: Array<SharedProperty>
   DISCORD_ENABLED: boolean
   LAST_UPDATE: string
   ENABLED: boolean
+  REF_LINK: string
   IS_RUNNING: boolean
 }
+
+type SharedProperty = "pnl" | "liq" | "entry" | "size" | 'mark';
+
+const sharedProperties = [{title: "Unrealized PnL", value: "pnl"}, {title: "Liquidation Price", value: "liq"}, {title: "Entry Price", value: "entry"}, {title: "Position Size", value: "size"}, {title: "Mark Price", value: "mark"}];
 
 interface ExchangeKey {
   KEY_ID: string
@@ -962,24 +1020,24 @@ interface TwitchUserInfo {
 
 <style>
 /* ===== Scrollbar CSS ===== */
-  /* Firefox */
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: #636363 #121212;
-  }
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #636363 #121212;
+}
 
-  /* Chrome, Edge, and Safari */
-  *::-webkit-scrollbar {
-    width: 12px;
-  }
+/* Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+  width: 12px;
+}
 
-  *::-webkit-scrollbar-track {
-    background: #121212;
-  }
+*::-webkit-scrollbar-track {
+  background: #121212;
+}
 
-  *::-webkit-scrollbar-thumb {
-    background-color: #636363;
-    border-radius: 10px;
-    border: 3px solid #121212;
-  }
+*::-webkit-scrollbar-thumb {
+  background-color: #636363;
+  border-radius: 10px;
+  border: 3px solid #121212;
+}
 </style>
