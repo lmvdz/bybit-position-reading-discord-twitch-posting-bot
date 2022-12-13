@@ -24,7 +24,6 @@ import db from 'secure-db';
 import { v4 as uuidv4 } from 'uuid';
 import qs from 'qs'
 import tmi from 'tmi.js'
-import jsonwebtoken from 'jsonwebtoken'
 //@ts-ignore
 import ccxt, { Market } from 'ccxt'
 
@@ -39,16 +38,38 @@ interface User {
     EXCHANGE_KEYS: Array<ExchangeKey>
     DISCORD_CHANNEL: string
     DISCORD_MESSAGE: string
+    DISCORD_SHARED_PROPERTIES: Array<SharedProperty>
     TWITCH_CHANNEL: string
     TWITCH_ENABLED: boolean
     TWITCH_TIMEOUT: boolean
     TWITCH_TIMEOUT_EXPIRE: number
+    TWITCH_SHARED_PROPERTIES: Array<SharedProperty>
     DISCORD_ENABLED: boolean
     LAST_UPDATE: string
     ENABLED: boolean
     REF_LINK: string
     IS_RUNNING: boolean
 }
+
+const DEFAULT_USER = {
+    ID: uuidv4(),
+    EXCHANGE_KEYS: [],
+    DISCORD_CHANNEL: '',
+    DISCORD_MESSAGE: '',
+    DISCORD_SHARED_PROPERTIES: ["liq", 'entry', 'pnl', 'size', 'mark'],
+    TWITCH_CHANNEL: '',
+    TWITCH_ENABLED: true,
+    TWITCH_TIMEOUT: true,
+    TWITCH_TIMEOUT_EXPIRE: 5,
+    TWITCH_SHARED_PROPERTIES: ["liq", 'entry', 'pnl', 'size', 'mark'],
+    DISCORD_ENABLED: true,
+    LAST_UPDATE: new Date().toUTCString(),
+    ENABLED: true,
+    REF_LINK: '',
+    IS_RUNNING: false
+} as User
+
+type SharedProperty = "pnl" | "liq" | "entry" | "size" | "mark";
 
 interface ExchangeKey {
     KEY_ID: string
@@ -70,6 +91,20 @@ interface TwitchUserInfo {
     email?: string
     created_at: string
 }
+
+// loop through users and add any missing fields based on the DEFAULT_USER
+users.all().forEach(([_id, user]: [string, User]) => {
+    let changed = false;
+    Object.keys(DEFAULT_USER).forEach(userKey => {
+        if (user[userKey] === undefined) {
+            changed = true;
+            user[userKey] = DEFAULT_USER[userKey]
+        }
+    })
+    if (changed) {
+        users.set(user.ID, user);
+    }
+})
 
 
 // invite discord bot to server: https://discord.com/api/oauth2/authorize?client_id=1044389854236127262&permissions=83968&scope=bot
@@ -237,7 +272,7 @@ export default class CryptoPositionsBot {
 
             positions.forEach((exchangePositionArray, exchangeId) => {
                 exchangePositionArray.forEach((position, index) => {
-                    formattedMessage.push(`[${target}] [${exchangeId}] ${(position.side) === 'long' ? '🟩 LONG ' : (position.side) === 'short' ? '🟥 SHORT ' : ''} ${(position.contracts * position.contractSize)} ${position.symbol} @ ${Number.parseFloat(Number.parseFloat(position.entryPrice).toFixed(2)).toLocaleString('en-US')} uPnL: ${Number.parseFloat(Number.parseFloat(position.unrealizedPnl).toFixed(4)).toLocaleString('en-US')} liq @ ${Number.parseFloat(Number.parseFloat(position.liquidationPrice).toFixed(2)).toLocaleString('en-US')}`)
+                    formattedMessage.push(`[${target}] [${exchangeId}] ${(position.side) === 'long' ? '🟩 LONG ' : (position.side) === 'short' ? '🟥 SHORT ' : ''}${(targetUser as User).TWITCH_SHARED_PROPERTIES.includes('size') ? (position.contracts * position.contractSize) : ''} ${position.symbol} ${(targetUser as User).TWITCH_SHARED_PROPERTIES.includes('entry') ? ' @ '+Number.parseFloat(Number.parseFloat(position.entryPrice).toFixed(2)).toLocaleString('en-US') : ''}${(targetUser as User).TWITCH_SHARED_PROPERTIES.includes('pnl') ? ' uPnL: ' + Number.parseFloat(Number.parseFloat(position.unrealizedPnl).toFixed(4)).toLocaleString('en-US') : ''}${(targetUser as User).TWITCH_SHARED_PROPERTIES.includes('liq') ? ' liq @ ' + Number.parseFloat(Number.parseFloat(position.liquidationPrice).toFixed(2)).toLocaleString('en-US') : ''}`)
                 });
             })
 
@@ -311,38 +346,47 @@ export default class CryptoPositionsBot {
             }
             fields = [{ name: exchangeId, value: '\u200B' }] as Array<APIEmbedField>;
             exchangePositionsArray.forEach(position => {
-                fields.push(...[
-                    {
-                        name: position.symbol,
-                        value: `${(position.side) === 'long' ? '🟩 LONG' : (position.side) === 'short' ? '🟥 SHORT' : ''}`
-                    },
-                    {
-                        name: 'Size',
-                        value: Number.parseFloat((Number.parseFloat(position.contracts) * Number.parseFloat(position.contractSize)).toFixed(4)).toLocaleString("en-US"),
-                        inline: true
-                    },
-                    {
+                fields.push({
+                    name: position.symbol,
+                    value: `${(position.side) === 'long' ? '🟩 LONG' : (position.side) === 'short' ? '🟥 SHORT' : ''}`
+                })
+                if ((user as User).DISCORD_SHARED_PROPERTIES.includes('entry')) {
+                    fields.push({
                         name: "Entry Price",
                         value: Number.parseFloat(Number.parseFloat(position.entryPrice).toFixed(2)).toLocaleString("en-US"),
                         inline: true
-                    },
-                    {
+                    })
+                }
+                if ((user as User).DISCORD_SHARED_PROPERTIES.includes('size')) {
+                    fields.push({
+                        name: 'Size',
+                        value: Number.parseFloat((Number.parseFloat(position.contracts) * Number.parseFloat(position.contractSize)).toFixed(4)).toLocaleString("en-US"),
+                        inline: true
+                    })
+                }
+                if ((user as User).DISCORD_SHARED_PROPERTIES.includes('mark')) {
+                    fields.push({
                         name: "Mark Price",
                         value: Number.parseFloat(Number.parseFloat(position.markPrice).toFixed(2)).toLocaleString("en-US"),
                         inline: true
-                    },
-                    {
+                    })
+                }
+                if ((user as User).DISCORD_SHARED_PROPERTIES.includes('pnl')) {
+                    fields.push({
                         name: "Unrealised PnL",
                         value: Number.parseFloat(Number.parseFloat(position.unrealizedPnl).toFixed(4)).toLocaleString("en-US"),
                         inline: true
-                    },
-                    {
+                    })
+                }
+                if ((user as User).DISCORD_SHARED_PROPERTIES.includes('liq')) {
+                    fields.push({
                         name: "Liquidation Price",
                         value: Number.parseFloat(Number.parseFloat(position.liquidationPrice).toFixed(2)).toLocaleString("en-US"),
                         inline: true
-                    },
-                    { name: '\u200B', value: '\u200B' }
-                ])
+                    })
+                }
+                if ((user as User).DISCORD_SHARED_PROPERTIES.length > 0)
+                    fields.push({ name: '\u200B', value: '\u200B' })
             })
             return fields;
         }).flat(Number.POSITIVE_INFINITY) as Array<APIEmbedField>;
@@ -587,13 +631,11 @@ export default class CryptoPositionsBot {
             console.log('user has no exchange keys ' + (user as User).TWITCH_CHANNEL);
             return;
         }
+        // clear all positions for user
 
-
-        let userPositions = this.positions.get(user.ID);
-
-        if (!userPositions) {
-            this.positions.set(user.ID, new Map<any, any>())
-        }
+        this.positions.set(user.ID, new Map<any, any>())
+        
+        // loop through exchange keys
 
         await Promise.allSettled((user as User).EXCHANGE_KEYS.map(async exchangeKey => {
             let exchange: ccxt.Exchange;
@@ -711,9 +753,11 @@ export default class CryptoPositionsBot {
         discord_channel_id: string,
         twitch_channel: string,
         discord_enabled: boolean = true,
+        discord_shared_properties: Array<SharedProperty> = ["entry", 'liq', 'pnl', 'size', 'mark'],
         twitch_enabled: boolean = true,
         twitch_timeout_enabled: boolean = true,
         twitch_timeout_expire: number = 5,
+        twitch_shared_properties: Array<SharedProperty> = ["entry", 'liq', 'pnl', 'size', 'mark'],
         enabled: boolean = false
     ) {
         if (!twitch_channel.startsWith("#")) {
@@ -730,10 +774,12 @@ export default class CryptoPositionsBot {
             TWITCH_ENABLED: twitch_enabled,
             TWITCH_TIMEOUT: twitch_timeout_enabled,
             TWITCH_TIMEOUT_EXPIRE: twitch_timeout_expire,
+            TWITCH_SHARED_PROPERTIES: twitch_shared_properties,
             EXCHANGE_KEYS: exchangeKeys,
             DISCORD_ENABLED: discord_enabled,
             DISCORD_CHANNEL: discord_channel_id,
             DISCORD_MESSAGE: null,
+            DISCORD_SHARED_PROPERTIES: discord_shared_properties,
             LAST_UPDATE: new Date().toUTCString(),
             ENABLED: enabled,
             IS_RUNNING: false
@@ -820,7 +866,7 @@ export default class CryptoPositionsBot {
 
     }
 
-    async updateUserDiscordInfo(twitchChannel: string, discordInfo: { DISCORD_MESSAGE: string, DISCORD_CHANNEL: string, DISCORD_ENABLED: boolean }) {
+    async updateUserDiscordInfo(twitchChannel: string, discordInfo: { DISCORD_MESSAGE: string, DISCORD_CHANNEL: string, DISCORD_ENABLED: boolean, DISCORD_SHARED_PROPERTIES: Array<SharedProperty> }) {
         let user = (users.all() as Array<any>).find(([_id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) === twitchChannel.toLowerCase());
         if (!user) {
             console.error('failed to update discord info for ' + twitchChannel + ' user not found')
@@ -830,13 +876,16 @@ export default class CryptoPositionsBot {
         user.DISCORD_CHANNEL = discordInfo.DISCORD_CHANNEL;
         user.DISCORD_MESSAGE = discordInfo.DISCORD_MESSAGE;
         user.DISCORD_ENABLED = discordInfo.DISCORD_ENABLED;
+        let needsToUpdateDiscord = Buffer.from(JSON.stringify(user.DISCORD_SHARED_PROPERTIES), 'utf-8').toString('base64') !== Buffer.from(JSON.stringify(discordInfo.DISCORD_SHARED_PROPERTIES), 'utf-8').toString('base64');
+        user.DISCORD_SHARED_PROPERTIES = discordInfo.DISCORD_SHARED_PROPERTIES;
         users.set(user.ID, user);
+        if (needsToUpdateDiscord) this.updateDiscord(user.ID);
         console.log('updated ' + user.TWITCH_CHANNEL + '\'s discord info');
         return true;
 
     }
 
-    async updateUserTwitchInfo(twitchChannel: string, twitchInfo: { TWITCH_ENABLED: boolean, TWITCH_TIMEOUT: boolean, TWITCH_TIMEOUT_EXPIRE: number }) {
+    async updateUserTwitchInfo(twitchChannel: string, twitchInfo: { TWITCH_ENABLED: boolean, TWITCH_TIMEOUT: boolean, TWITCH_TIMEOUT_EXPIRE: number, TWITCH_SHARED_PROPERTIES: Array<SharedProperty> }) {
         let user = (users.all() as Array<any>).find(([_id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) === twitchChannel.toLowerCase());
         if (!user) {
             console.error('failed to update twitch info for ' + twitchChannel + ' user not found');
@@ -851,6 +900,7 @@ export default class CryptoPositionsBot {
         }
         user.TWITCH_TIMEOUT = twitchInfo.TWITCH_TIMEOUT;
         user.TWITCH_TIMEOUT_EXPIRE = Number.parseFloat(twitchInfo.TWITCH_TIMEOUT_EXPIRE.toString());
+        user.TWITCH_SHARED_PROPERTIES = twitchInfo.TWITCH_SHARED_PROPERTIES;
         users.set(user.ID, user);
         console.log('updated ' + user.TWITCH_CHANNEL + '\'s twitch info');
         return true;
@@ -947,7 +997,7 @@ export default class CryptoPositionsBot {
 
     async createUser(twitchChannel: string) {
         try {
-            let userID = await this.addUser([], '', '#' + twitchChannel, false, false, true, 5, false)
+            let userID = await this.addUser([], '', '#' + twitchChannel, false, ["pnl", 'liq', 'entry', 'size'], false, true, 5, ["pnl", 'liq', 'entry', 'size'], false)
 
             if (userID === null) return null;
 
