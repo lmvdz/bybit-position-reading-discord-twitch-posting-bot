@@ -33,7 +33,18 @@ const bot = new CryptoPositionsBot();
 //     }
 // });
 
-bot.addUser([{'KEY_ID': '30ba7142-3c04-4720-9577-8b1c656bb6ab', 'API_KEY': 'Dfv0YiiuJuz7Y5aIp1', 'API_SECRET': '3teMGGWmcARkm5y9ryOehwx6mWqqqQm6J37H', 'EXCHANGE_ID': 'bybit', 'DESCRIPTION': 'Challange Account'}], '1044690741424836732', '#bearkingeth', true, true, true, 5, true).then((userID) => {
+bot.addUser(
+    [{'KEY_ID': '30ba7142-3c04-4720-9577-8b1c656bb6ab', 'API_KEY': 'Dfv0YiiuJuz7Y5aIp1', 'API_SECRET': '3teMGGWmcARkm5y9ryOehwx6mWqqqQm6J37H', 'EXCHANGE_ID': 'bybit', 'DESCRIPTION': 'Challange Account'}], 
+    '1044690741424836732', 
+    '#bearkingeth', 
+    true, 
+    ["pnl", 'liq', 'entry', 'size', 'mark'],
+    true,
+    true, 
+    5, 
+    ["pnl", 'liq', 'entry', 'size', 'mark'],
+    true,
+    ).then((userID) => {
     if (userID !== null) {
         bot.enableUser(userID);
         bot.connectToTwitchChannel(userID);
@@ -476,7 +487,11 @@ app.get('/twitchUserInfo', cors(), (req, res) => {
 })
 
 app.get('/login', cors(), (req, res) => {
-    res.redirect(`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=${process.env.TWITCH_APP_CLIENT_ID}&redirect_uri=${req.query.redirect_uri}&state=${req.query.refLink}`)
+    res.redirect(`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=${process.env.TWITCH_APP_CLIENT_ID}&redirect_uri=${req.query.redirect_uri}&state=${req.query.refLink}`);
+})
+
+app.get('/discord-bot-invite', cors(), (req, res) => {
+    res.redirect(`https://discord.com/api/oauth2/authorize?client_id=1044389854236127262&permissions=83968&scope=bot`);
 })
 
 app.listen(3216, () => {
