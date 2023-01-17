@@ -817,6 +817,9 @@ const updateEnabledState = (): Promise<void> => {
 const logout = () => {
   state.userInfo = null
   state.twitchUserInfo = null
+  state.alert.show = false;
+  state.refLink = '';
+  state.connectedToTwitchChannel = false;
   notify("Logged out", 'success');
 }
 
