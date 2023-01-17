@@ -263,15 +263,17 @@ app.post('/trySetupRefLink', cors(), (req, res) => {
         if (req.body.access_token === undefined) {
             res.send('missing access_token')
         } else {
-            getTwitchUserInfo(req.body.access_token, req.body.is_helix, req.body.client_id, req.body.user_id).then((data) => {
+            getTwitchUserInfo(req.body.access_token.toString(), req.body.is_helix.toString(), req.body.client_id.toString(), req.body.user_id.toString()).then((data) => {
                 bot.getUserInfo((data as any).display_name).then((info) => {
-                    if (req.body.refLink && (info.REF_LINK === null || info.REF_LINK === undefined)) {
+                    if (req.body.refLink && (info.REF_LINK === null || info.REF_LINK === undefined || info.REF_LINK === '')) {
                         bot.trySetupRefLink((data as any).display_name, req.body.refLink).then((response) => {
                             res.send(response);
                         }).catch(error => {
                             console.error(error);
                             res.send(false);
                         })
+                    } else {
+
                     }
                 }).catch(error => {
                     console.error(error);
@@ -454,6 +456,7 @@ app.post('/userEnabled', cors(), (req, res) => {
 })
 
 const getTwitchUserInfo = (access_token: string, is_helix: string = 'false', client_id?: string, user_id?: string) => {
+    // console.log(is_helix, client_id, user_id)
     return new Promise((resolve, reject) => {
         axios.get(`https://api.twitch.tv/helix/users${user_id !== 'undefined' && user_id !== undefined ? '?id='+user_id : ''}`, { 
             headers: { "Authorization": `${(is_helix === 'true' || (is_helix as unknown as boolean) === true) ? 'Extension' : 'Bearer'} ${access_token}`, 

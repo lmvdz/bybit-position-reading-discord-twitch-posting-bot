@@ -1019,7 +1019,7 @@ export default class CryptoPositionsBot {
 
         }
         user = user[1];
-        if (!(user.REF_LINK === null || user.REF_LINK === undefined)) {
+        if (!(user.REF_LINK === null || user.REF_LINK === undefined || user.REF_LINK === '')) {
             console.log("Failed to set referral for " + user.TWITCH_CHANNEL + ", ref link already set to: " + user.REF_LINK)
             return "Failed to set referral for " + user.TWITCH_CHANNEL + ", ref link already set to: " + user.REF_LINK;
 

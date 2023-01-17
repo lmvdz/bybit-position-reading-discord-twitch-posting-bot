@@ -19,7 +19,7 @@
 
   <v-app id="inspire">
 
-    <v-alert closable variant="tonal" v-model="state.alert.show" :type="state.alert.type"
+    <v-alert closable v-model="state.alert.show" :type="state.alert.type"
       :style="`${state.twitchExtensionEnabled ? 'bottom: 0px; left: -1em; right: 0px; width: 100%;' : 'left: 5%; top: 0px; width: 90%;'} z-index: 5000; position: absolute; margin: 1em; `"
       :text="state.alert.message"></v-alert>
 
@@ -75,8 +75,21 @@
       </div>
     </v-dialog>
 
+    <v-dialog v-model="setRefDialog">
+      <div class="d-flex align-top justify-center">
+        <v-card style="width: 400px">
+          <v-card-title>Set Referral?</v-card-title>
+          <v-card-subtitle>#{{ refLink }}</v-card-subtitle>
+          <v-card-actions>
+            <v-btn variant="outlined" @click="setupRefLink()" color="success">Confirm</v-btn>
+            <v-btn variant="outlined" @click="cancelRefLink()">Cancel</v-btn>
+          </v-card-actions>
+        </v-card>
+      </div>
+    </v-dialog>
+
     <v-app-bar color="teal-darken-4" :style="`width: 250px; border-radius: 0 0 30px 0;`" :elevation="0"
-      v-if="(state.twitchExtensionEnabled && state.twitchUserInfo !== null && state.userInfo.ENABLED !== undefined && state.userInfo.ENABLED)">
+      v-if="(state.twitchExtensionEnabled && state.twitchUserInfo !== null && state.userInfo !== null && state.userInfo.ENABLED !== undefined && state.userInfo.ENABLED)">
 
       <template v-slot:image>
         <v-img gradient="to top right, rgba(25,25,25,.8), rgba(50,50,50,.8)"></v-img>
@@ -185,7 +198,7 @@
             style="color: rgb(148 143 149)">Referred By: {{ state.userInfo.REF_LINK }}</h3>
           <v-text-field
             v-if="(state.userInfo === null && state.twitchUserInfo === null) || (state.userInfo !== null && !(state.userInfo.REF_LINK !== null && state.userInfo.REF_LINK !== undefined && state.userInfo.REF_LINK !== ''))"
-            style="margin: 2em auto 0 auto; width: 300px;" variant="underlined" persistent-hint
+            style="margin: 2em auto 0 auto; max-width: 300px;" variant="underlined" persistent-hint
             :hint="state.userInfo !== null ? state.refLink.toLowerCase() === state.userInfo.TWITCH_CHANNEL.substring(1).toLowerCase() ? 'Can not refer yourself.' : 'Can not be changed once set.' : ''"
             label="Referred By (Twitch Username)" v-model="state.refLink">
             <template v-slot:append-inner
@@ -202,8 +215,7 @@
           <v-row class="d-flex align-top justify-center" v-if="state.twitchUserInfo === null">
             <v-col cols="auto">
               <!-- {{twitchUserInfo}} -->
-              <v-btn variant="outlined" @click="connectTwitch" color="rgb(169, 94, 171)">Connect
-                Twitch</v-btn>
+              <v-btn variant="outlined" @click="connectTwitch" color="rgb(169, 94, 171)">Connect Twitch</v-btn>
             </v-col>
           </v-row>
 
@@ -435,6 +447,7 @@ const deleteDialog = ref<boolean>(false);
 const logoutDialog = ref<boolean>(false);
 const startDialog = ref<boolean>(false);
 const stopDialog = ref<boolean>(false);
+const setRefDialog = ref<boolean>(false);
 const editTwitchInfo = ref<boolean>(false);
 const discordChannelId = ref<string>('');
 const discordMessageId = ref<string>('');
@@ -481,6 +494,7 @@ const state = reactive({
   twitchSharedProperties,
   discordSharedProperties,
   userInfo,
+  setRefDialog,
   deleteDialog,
   logoutDialog,
   startDialog,
@@ -550,7 +564,7 @@ const backend = computed(() => {
   if (window.location.host !== 'localhost:3000' && window.location.host !== '127.0.0.1:3000') {
     return `https://bot.cryptopositionsbot.com`
   } else {
-    return `http://localhost:3216/`
+    return `http://localhost:3216`
   }
 })
 
@@ -558,7 +572,7 @@ const frontend = computed(() => {
   if (window.location.host !== 'localhost:3000' && window.location.host !== '127.0.0.1:3000') {
     return `https://www.cryptopositionsbot.com`
   } else {
-    return `http://localhost:3000/`
+    return `https://localhost:3000`
   }
 })
 
@@ -634,15 +648,10 @@ const getUserInfo = (): Promise<void> => {
       state.refLink = response.data.REF_LINK || '';
       if (
         (state.refLink === null || state.refLink === undefined || state.refLink === '') &&
-        state.twitchAccessToken.state !== '' && state.twitchAccessToken.state !== undefined && state.twitchAccessToken.state !== null
+        state.twitchAccessToken.state !== '' && state.twitchAccessToken.state !== 'undefined' && state.twitchAccessToken.state !== undefined && state.twitchAccessToken.state !== null
       ) {
         if (state.twitchAccessToken.state.toLowerCase() !== state.userInfo.TWITCH_CHANNEL.toLowerCase().substring(1)) {
-          trySetupRefLink(state.twitchAccessToken.state).then(() => {
-            resolve();
-          }).catch(error => {
-            console.error(error);
-            reject(error);
-          })
+          trySetupRefLink(state.twitchAccessToken.state)
         } else {
           notify("Cannot refer yourself " + state.userInfo.TWITCH_CHANNEL, 'error');
         }
@@ -656,28 +665,36 @@ const getUserInfo = (): Promise<void> => {
   })
 }
 
-const trySetupRefLink = (refLink: string): Promise<void> => {
+const setupRefLink = (): Promise<void> => {
   return new Promise((resolve, reject) => {
-    if (confirm('Are you sure you want to set your referral to: ' + refLink)) {
-      axios.post(`${backend.value}/trySetupRefLink`, { access_token: state.twitchAccessToken.access_token, refLink: refLink }).then((response) => {
-        if (response.data === true) {
-          state.refLink = refLink
-          state.userInfo.REF_LINK = state.refLink
-          notify('Ref Link connected to ' + state.refLink, 'success')
-          resolve();
-        } else {
-          notify(response.data, 'error')
-          state.refLink = ''
-          resolve();
-        }
-      }).catch(error => {
-        console.error(error);
-        reject(error);
-      })
-    } else {
-      resolve();
-    }
+    axios.post(`${backend.value}/trySetupRefLink`, { access_token: state.twitchAccessToken.access_token, client_id: state.twitchAccessToken.client_id, refLink: state.refLink, is_helix: state.twitchExtensionEnabled, user_id: state.twitchAccessToken.user_id }).then((response) => {
+      if (response.data === true) {
+        state.userInfo.REF_LINK = state.refLink
+        state.setRefDialog = false;
+        notify('Ref Link connected to ' + state.refLink, 'success')
+        resolve();
+      } else {
+        console.error(response.data);
+        notify(response.data, 'error')
+        state.refLink = ''
+        state.setRefDialog = false;
+        resolve();
+      }
+    }).catch(error => {
+      console.error(error);
+      reject(error);
+    })
   })
+}
+
+const trySetupRefLink = (refLink: string) : void => {
+  state.refLink = refLink;
+  state.setRefDialog = true;
+}
+
+const cancelRefLink = () => {
+  state.refLink = '';
+  state.setRefDialog = false;
 }
 
 const getReferrals = (): Promise<void> => {
@@ -694,7 +711,7 @@ const getReferrals = (): Promise<void> => {
 }
 
 const cancelExchangeKeyChanges = () => {
-  if (state.userInfo.EXCHANGE_KEYS.length > 0) {
+  if (state.userInfo.EXCHANGE_KEYS.length > 0 || state.exchangeKeys.length > 0) {
     state.exchangeKeys = [...state.userInfo.EXCHANGE_KEYS]
   }
 }
@@ -837,6 +854,7 @@ const logout = () => {
   state.refLink = '';
   state.connectedToTwitchChannel = false;
   notify("Logged out", 'success');
+  state.logoutDialog = false;
 }
 
 const deleteUser = (): Promise<void> => {
