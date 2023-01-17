@@ -420,7 +420,7 @@ import { computed } from '@vue/reactivity';
 
 type AlertType = "success" | "error" | "warning" | "info" | undefined
 
-const twitchImage = new URL('./assets/TwitchGlitchBlackOps.png', import.meta.url).href
+const twitchImage = new URL('./assets/logo.png', import.meta.url).href
 const discordImage = new URL('./assets/discord-mark-white.png', import.meta.url).href
 
 const alert = ref<{
