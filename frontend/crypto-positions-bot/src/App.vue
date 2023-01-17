@@ -542,12 +542,28 @@ const connectTwitch = () => {
   } else if (window.location.host !== 'localhost:3000' && window.location.host !== '127.0.0.1:3000') {
     window.location.href = (`https://bot.cryptopositionsbot.com/login?redirect_uri=https://www.cryptopositionsbot.com/&state=${state.refLink}`)
   } else {
-    window.location.href = (`https://bot.cryptopositionsbot.com/login?redirect_uri=https://localhost:3000/&state=${state.refLink}`)
+    window.location.href = (`http://localhost:3216/login?redirect_uri=https://localhost:3000/&state=${state.refLink}`)
   }
 }
 
+const backend = computed(() => {
+  if (window.location.host !== 'localhost:3000' && window.location.host !== '127.0.0.1:3000') {
+    return `https://bot.cryptopositionsbot.com`
+  } else {
+    return `http://localhost:3216/`
+  }
+})
+
+const frontend = computed(() => {
+  if (window.location.host !== 'localhost:3000' && window.location.host !== '127.0.0.1:3000') {
+    return `https://www.cryptopositionsbot.com`
+  } else {
+    return `http://localhost:3000/`
+  }
+})
+
 const copyRefLink = () => {
-  navigator.clipboard.writeText(`https://www.cryptopositionsbot.com/?ref=${state.userInfo.TWITCH_CHANNEL.toLowerCase().substring(1)}`);
+  navigator.clipboard.writeText(`${frontend.value}/?ref=${state.userInfo.TWITCH_CHANNEL.toLowerCase().substring(1)}`);
   notify("Copied ref link to clipboard", 'success')
 }
 
@@ -581,7 +597,7 @@ onMounted(() => {
 
 const getTwitchUserInfo = (): Promise<void> => {
   return new Promise((resolve, reject) => {
-    axios.get(`https://bot.cryptopositionsbot.com/twitchUserInfo?access_token=${state.twitchAccessToken.access_token}&is_helix=${state.twitchExtensionEnabled}&client_id=${state.twitchAccessToken.client_id}&user_id=${state.twitchAccessToken.user_id}`).then((response) => {
+    axios.get(`${backend.value}/twitchUserInfo?access_token=${state.twitchAccessToken.access_token}&is_helix=${state.twitchExtensionEnabled}&client_id=${state.twitchAccessToken.client_id}&user_id=${state.twitchAccessToken.user_id}`).then((response) => {
       state.twitchUserInfo = response.data;
       resolve();
     }).catch(error => {
@@ -594,7 +610,7 @@ const getTwitchUserInfo = (): Promise<void> => {
 
 const getUserInfo = (): Promise<void> => {
   return new Promise((resolve, reject) => {
-    axios.get(`https://bot.cryptopositionsbot.com/userInfo?access_token=${state.twitchAccessToken.access_token}&is_helix=${state.twitchExtensionEnabled}&client_id=${state.twitchAccessToken.client_id}&user_id=${state.twitchAccessToken.user_id}`).then((response) => {
+    axios.get(`${backend.value}/userInfo?access_token=${state.twitchAccessToken.access_token}&is_helix=${state.twitchExtensionEnabled}&client_id=${state.twitchAccessToken.client_id}&user_id=${state.twitchAccessToken.user_id}`).then((response) => {
       exchangeKeysHash.value = Buffer.from(JSON.stringify(response.data.EXCHANGE_KEYS), 'utf-8').toString('base64')
       twitchSharedPropertiesHash.value = Buffer.from(JSON.stringify(response.data.TWITCH_SHARED_PROPERTIES), 'utf-8').toString('base64')
       discordSharedPropertiesHash.value = Buffer.from(JSON.stringify(response.data.DISCORD_SHARED_PROPERTIES), 'utf-8').toString('base64')
@@ -643,7 +659,7 @@ const getUserInfo = (): Promise<void> => {
 const trySetupRefLink = (refLink: string): Promise<void> => {
   return new Promise((resolve, reject) => {
     if (confirm('Are you sure you want to set your referral to: ' + refLink)) {
-      axios.post(`https://bot.cryptopositionsbot.com/trySetupRefLink`, { access_token: state.twitchAccessToken.access_token, refLink: refLink }).then((response) => {
+      axios.post(`${backend.value}/trySetupRefLink`, { access_token: state.twitchAccessToken.access_token, refLink: refLink }).then((response) => {
         if (response.data === true) {
           state.refLink = refLink
           state.userInfo.REF_LINK = state.refLink
@@ -666,7 +682,7 @@ const trySetupRefLink = (refLink: string): Promise<void> => {
 
 const getReferrals = (): Promise<void> => {
   return new Promise((resolve, reject) => {
-    axios.get(`https://bot.cryptopositionsbot.com/referrals?access_token=${state.twitchAccessToken.access_token}&is_helix=${state.twitchExtensionEnabled}&client_id=${state.twitchAccessToken.client_id}&user_id=${state.twitchAccessToken.user_id}`).then((response) => {
+    axios.get(`${backend.value}/referrals?access_token=${state.twitchAccessToken.access_token}&is_helix=${state.twitchExtensionEnabled}&client_id=${state.twitchAccessToken.client_id}&user_id=${state.twitchAccessToken.user_id}`).then((response) => {
       state.referrals = response.data;
       resolve()
     }).catch(error => {
@@ -704,7 +720,7 @@ const updateUserExchangeKeys = (): Promise<void> => {
       user_id: state.twitchAccessToken.user_id,
       exchangeKeys: state.exchangeKeys
     }
-    axios.post(`https://bot.cryptopositionsbot.com/userExchangeKeys`, data).then((response) => {
+    axios.post(`${backend.value}/userExchangeKeys`, data).then((response) => {
       exchangeKeysHash.value = Buffer.from(JSON.stringify(state.exchangeKeys), 'utf-8').toString('base64')
       state.userInfo.EXCHANGE_KEYS = state.exchangeKeys.map(exchangeKey => {
         return {
@@ -734,7 +750,7 @@ const updateUserDiscordInfo = (): Promise<void> => {
       user_id: state.twitchAccessToken.user_id,
       discordInfo: { DISCORD_CHANNEL: state.discordChannelId, DISCORD_MESSAGE: state.discordMessageId, DISCORD_ENABLED: state.discordEnabled, DISCORD_SHARED_PROPERTIES: state.discordSharedProperties }
     }
-    axios.post(`https://bot.cryptopositionsbot.com/userDiscordInfo`, data).then((response) => {
+    axios.post(`${backend.value}/userDiscordInfo`, data).then((response) => {
       if (response.data === true) {
         state.userInfo.DISCORD_CHANNEL = state.discordChannelId;
         state.userInfo.DISCORD_MESSAGE = state.discordMessageId;
@@ -764,7 +780,7 @@ const updateUserTwitchInfo = (): Promise<void> => {
       user_id: state.twitchAccessToken.user_id,
       twitchInfo: { TWITCH_ENABLED: state.twitchEnabled, TWITCH_TIMEOUT: state.twitchTimeoutEnabled, TWITCH_TIMEOUT_EXPIRE: state.twitchTimeoutLength, TWITCH_SHARED_PROPERTIES: state.twitchSharedProperties }
     }
-    axios.post(`https://bot.cryptopositionsbot.com/userTwitchInfo`, data).then((response) => {
+    axios.post(`${backend.value}/userTwitchInfo`, data).then((response) => {
       if (response.data === true) {
         notify("Updated user twitch info", 'success');
         state.userInfo.TWITCH_ENABLED = state.twitchEnabled;
@@ -798,7 +814,7 @@ const updateEnabledState = (): Promise<void> => {
       user_id: state.twitchAccessToken.user_id,
       enabled: state.enabled
     }
-    axios.post('https://bot.cryptopositionsbot.com/userEnabled', data).then((response) => {
+    axios.post(`${backend.value}/userEnabled`, data).then((response) => {
       if (response.data === true) {
         state.userInfo.ENABLED = state.enabled;
         notify("Updated user enabled state", 'success');
@@ -831,7 +847,7 @@ const deleteUser = (): Promise<void> => {
       client_id: state.twitchAccessToken.client_id,
       user_id: state.twitchAccessToken.user_id,
     }
-    axios.post('https://bot.cryptopositionsbot.com/removeUser', data).then((response) => {
+    axios.post(`${backend.value}/removeUser`, data).then((response) => {
       state.deleteDialog = false;
       logout()
       resolve()
@@ -850,7 +866,7 @@ const start = (): Promise<void> => {
       client_id: state.twitchAccessToken.client_id,
       user_id: state.twitchAccessToken.user_id,
     }
-    axios.post('https://bot.cryptopositionsbot.com/start', data).then((response) => {
+    axios.post(`${backend.value}/start`, data).then((response) => {
       if (response.data === true) {
         state.userInfo.IS_RUNNING = true;
         state.startDialog = false;
@@ -875,7 +891,7 @@ const stop = (): Promise<void> => {
       client_id: state.twitchAccessToken.client_id,
       user_id: state.twitchAccessToken.user_id,
     }
-    axios.post('https://bot.cryptopositionsbot.com/stop', data).then((response) => {
+    axios.post(`${backend.value}/stop`, data).then((response) => {
       if (response.data === true) {
         state.userInfo.IS_RUNNING = false;
         state.stopDialog = false;
@@ -905,7 +921,7 @@ const connectToTwitchChannel = (): Promise<void> => {
         client_id: state.twitchAccessToken.client_id,
         user_id: state.twitchAccessToken.user_id
       }
-      axios.post('https://bot.cryptopositionsbot.com/connectToTwitchChannel', data).then((response) => {
+      axios.post(`${backend.value}/connectToTwitchChannel`, data).then((response) => {
         if (response.data === true) {
           state.connectedToTwitchChannel = true;
           notify('Bot connected to twich channel chat', 'success')
@@ -931,7 +947,7 @@ const disconnectFromTwitchChannel = (): Promise<void> => {
           client_id: state.twitchAccessToken.client_id,
           user_id: state.twitchAccessToken.user_id
         }
-        axios.post('https://bot.cryptopositionsbot.com/disconnectFromTwitchChannel', data).then((response) => {
+        axios.post(`${backend.value}/disconnectFromTwitchChannel`, data).then((response) => {
           if (response.data === true) {
             state.connectedToTwitchChannel = false;
             notify('Bot disconnected from twich channel chat', 'success')
@@ -951,7 +967,7 @@ const disconnectFromTwitchChannel = (): Promise<void> => {
 
 const isConnectedToTwitchChannel = (): Promise<boolean> => {
   return new Promise((resolve, reject) => {
-    axios.get(`https://bot.cryptopositionsbot.com/isConnectedToTwitchChannel?access_token=${state.twitchAccessToken.access_token}&is_helix=${state.twitchExtensionEnabled}&client_id=${state.twitchAccessToken.client_id}&user_id=${state.twitchAccessToken.user_id}`).then((response) => {
+    axios.get(`${backend.value}/isConnectedToTwitchChannel?access_token=${state.twitchAccessToken.access_token}&is_helix=${state.twitchExtensionEnabled}&client_id=${state.twitchAccessToken.client_id}&user_id=${state.twitchAccessToken.user_id}`).then((response) => {
       state.connectedToTwitchChannel = response.data;
       resolve(response.data)
     }).catch(error => {
