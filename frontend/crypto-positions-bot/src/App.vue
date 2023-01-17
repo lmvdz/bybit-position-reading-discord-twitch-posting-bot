@@ -132,12 +132,12 @@
         </template>
       </v-tooltip>
 
-      <v-tooltip text="Copy Ref Link" location="bottom">
+      <!-- <v-tooltip text="Copy Ref Link" location="bottom">
         <template v-slot:activator="{ props }">
           <v-btn v-bind="props" size="32px" variant="plain" icon="mdi-share" color="success"
             @click="copyRefLink()"></v-btn>
         </template>
-      </v-tooltip>
+      </v-tooltip> -->
 
     </v-app-bar>
 
