@@ -19,6 +19,7 @@
     },
   },
   "include": [
+    "src/**/*.json",
     "src/**/*.ts",
     "src/**/*.d.ts",
     "src/**/*.tsx",

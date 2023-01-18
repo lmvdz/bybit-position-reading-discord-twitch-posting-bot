@@ -724,7 +724,22 @@ export default class CryptoPositionsBot {
         })
     }
 
-
+    getChannelPositions(displayName: string) : Promise<any> {
+        return new Promise((resolve, reject) => {
+            let user = (users.all() as Array<any>).find(([_id, user]) => user.TWITCH_CHANNEL.toLowerCase().substring(1) === displayName.toLowerCase());
+            if (!user) {
+                reject('user does not exist')
+            }
+            let positions = [];
+            let positionsExchangeMap = this.positions.get(user.ID);
+            [...positionsExchangeMap.entries()].map(([exchangeId, exchangePositionsArray]) => {
+                exchangePositionsArray.forEach(position => {
+                    positions.push({ ...position, exchangeId })
+                })
+            })
+            resolve(positions);
+        })
+    }
 
     getTwitchUserInfo(userID: string): Promise<TwitchUserInfo> {
         return new Promise((resolve, reject) => {

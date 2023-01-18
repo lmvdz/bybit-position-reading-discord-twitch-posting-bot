@@ -470,6 +470,37 @@ const getTwitchUserInfo = (access_token: string, is_helix: string = 'false', cli
     })
 }
 
+const getChannelPositions = (access_token: string, is_helix: string = 'false', client_id?: string, channel_id?: string) => {
+    return new Promise((resolve, reject) => {
+        axios.get(`https://api.twitch.tv/helix/users${channel_id !== 'undefined' && channel_id !== undefined ? '?id='+channel_id : ''}`, { 
+            headers: { "Authorization": `${(is_helix === 'true' || (is_helix as unknown as boolean) === true) ? 'Extension' : 'Bearer'} ${access_token}`, 
+            "Client-Id": (client_id !== 'undefined' && client_id !== undefined) ? client_id : process.env.TWITCH_APP_CLIENT_ID}
+        }).then((response) => {
+            resolve(bot.getChannelPositions((response.data as any).display_name))
+        }).catch(error => {
+            console.error(error);
+            reject(error)
+        })
+    })
+}
+
+app.get('/getChannelPositions', cors(), (req, res) => {
+    if (req.query !== undefined) {
+        if (req.query.access_token === undefined) {
+            res.send('missing access_token')
+        } else {
+            getChannelPositions(req.query.access_token as string, req.query.is_helix as string, req.query.client_id as string, req.query.channel_id as string).then((data) => {
+                res.send(data)
+            }).catch(error => {
+                console.error(error);
+                res.status(500).send(error);
+            })
+        }
+    } else {
+        res.send('missing access_token')
+    }
+})
+
 app.get('/twitchUserInfo', cors(), (req, res) => {
     
         if (req.query !== undefined) {

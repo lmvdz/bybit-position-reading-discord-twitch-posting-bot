@@ -106,7 +106,7 @@
         <template v-slot:activator="{ props }">
           <v-btn style="margin-right: 1em;" v-bind="props" key="chat" icon v-if="state.twitchUserInfo !== null"
             :active="state.editTwitchInfo" flat :color="state.editTwitchInfo ? 'success' : 'warning'"
-            @click="state.editTwitchInfo = !state.editTwitchInfo; state.editDiscordInfo = false; state.editExchangeKeys = false;">
+            @click="state.editTwitchInfo = !state.editTwitchInfo; state.editDiscordInfo = false; state.editExchangeKeys = false; state.showChannelPositions = false;">
             <v-img style="width: 28px; height: 28px" :src="twitchImage"></v-img>
           </v-btn>
         </template>
@@ -116,7 +116,7 @@
         <template v-slot:activator="{ props }">
           <v-btn style="margin-right: 1em;" v-bind="props" key="forum" icon v-if="state.twitchUserInfo !== null"
             :active="state.editDiscordInfo" flat :color="state.editDiscordInfo ? 'success' : 'warning'"
-            @click="state.editDiscordInfo = !state.editDiscordInfo; state.editExchangeKeys = false; state.editTwitchInfo = false;">
+            @click="state.editDiscordInfo = !state.editDiscordInfo; state.editExchangeKeys = false; state.editTwitchInfo = false; state.showChannelPositions = false;">
             <v-img style="width: 28px; height: 28px" :src="discordImage"></v-img>
           </v-btn>
         </template>
@@ -126,8 +126,18 @@
         <template v-slot:activator="{ props }">
           <v-btn style="margin-right: 1em;" v-bind="props" key="key" icon v-if="state.twitchUserInfo !== null"
             :active="state.editExchangeKeys" flat size="32px" :color="state.editExchangeKeys ? 'success' : 'warning'"
-            @click="state.editExchangeKeys = !state.editExchangeKeys; state.editDiscordInfo = false; state.editTwitchInfo = false;">
+            @click="state.editExchangeKeys = !state.editExchangeKeys; state.editDiscordInfo = false; state.editTwitchInfo = false; state.showChannelPositions = false;">
             <v-icon>mdi-key</v-icon>
+          </v-btn>
+        </template>
+      </v-tooltip>
+
+      <v-tooltip text="Positions" location="bottom">
+        <template v-slot:activator="{ props }">
+          <v-btn style="margin-right: 1em;" v-bind="props" key="key" icon v-if="state.twitchUserInfo !== null"
+            :active="state.showChannelPositions" flat size="32px" :color="state.showChannelPositions ? 'success' : 'warning'"
+            @click="state.showChannelPositions = !state.showChannelPositions; state.editDiscordInfo = false; state.editTwitchInfo = false; state.editExchangeKeys = false;">
+            <v-icon>mdi-finance</v-icon>
           </v-btn>
         </template>
       </v-tooltip>
@@ -156,21 +166,27 @@
       <v-divider v-if="state.twitchUserInfo !== null"></v-divider>
       <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null"
         :active="state.editTwitchInfo" flat class="d-block text-center mx-auto mb-9" size="32px" icon="mdi-chat"
-        @click="state.editTwitchInfo = !state.editTwitchInfo; state.editDiscordInfo = false; state.editExchangeKeys = false;">
+        @click="state.editTwitchInfo = !state.editTwitchInfo; state.editDiscordInfo = false; state.editExchangeKeys = false; state.showChannelPositions = false;">
         <v-img style="width: 32px; height: 32px" :src="twitchImage"></v-img>
       </v-btn>
 
       <v-divider v-if="state.twitchUserInfo !== null"></v-divider>
       <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null"
         :active="state.editDiscordInfo" flat class="d-block text-center mx-auto mb-9" size="32px" icon
-        @click="state.editDiscordInfo = !state.editDiscordInfo; state.editTwitchInfo = false; state.editExchangeKeys = false;">
-        <v-img :style="`width: 32px; height: 32px;`" :src="discordImage"></v-img>
+        @click="state.editDiscordInfo = !state.editDiscordInfo; state.editTwitchInfo = false; state.editExchangeKeys = false; state.showChannelPositions = false;">
+        <v-img :style="`width: 28px; height: 28px;`" :src="discordImage"></v-img>
       </v-btn>
 
       <v-divider v-if="state.twitchUserInfo !== null"></v-divider>
       <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null"
         :active="state.editExchangeKeys" flat class="d-block text-center mx-auto mb-9" size="32px" icon="mdi-key"
-        @click="state.editExchangeKeys = !state.editExchangeKeys; state.editTwitchInfo = false; state.editDiscordInfo = false;">
+        @click="state.editExchangeKeys = !state.editExchangeKeys; state.editTwitchInfo = false; state.editDiscordInfo = false; state.showChannelPositions = false;">
+      </v-btn>
+
+      <v-divider v-if="state.twitchUserInfo !== null"></v-divider>
+      <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null"
+        :active="state.showChannelPositions" flat class="d-block text-center mx-auto mb-9" size="32px" icon="mdi-finance"
+        @click="state.showChannelPositions = !state.showChannelPositions; state.editTwitchInfo = false; state.editDiscordInfo = false; state.editExchangeKeys = false;">
       </v-btn>
 
       <!-- <v-btn variant="plain" style="margin-top: 2em;" v-if="state.twitchUserInfo !== null" :active="state.deleteDialog" flat
@@ -210,7 +226,7 @@
           </v-text-field>
 
           <div class="py-5"
-            v-if="(!state.twitchExtensionEnabled || (state.twitchExtensionEnabled && !state.editDiscordInfo && !state.editTwitchInfo && !state.editExchangeKeys))" />
+            v-if="(!state.twitchExtensionEnabled || (state.twitchExtensionEnabled && !state.editDiscordInfo && !state.editTwitchInfo && !state.editExchangeKeys && !state.showChannelPositions))" />
 
           <v-row class="d-flex align-top justify-center" v-if="state.twitchUserInfo === null">
             <v-col cols="auto">
@@ -221,9 +237,9 @@
 
 
           <v-row class="d-flex align-top justify-center"
-            v-if="state.twitchUserInfo !== null && state.userInfo !== null && (!state.twitchExtensionEnabled || (state.twitchExtensionEnabled && !state.editDiscordInfo && !state.editTwitchInfo && !state.editExchangeKeys))">
+            v-if="state.twitchUserInfo !== null && state.userInfo !== null && (!state.twitchExtensionEnabled || (state.twitchExtensionEnabled && !state.editDiscordInfo && !state.editTwitchInfo && !state.editExchangeKeys && !state.showChannelPositions))">
             <v-col cols="auto">
-              <div v-if="!state.editDiscordInfo && !state.editTwitchInfo && !state.editExchangeKeys">
+              <div v-if="!state.editDiscordInfo && !state.editTwitchInfo && !state.editExchangeKeys && !state.showChannelPositions">
                 <v-checkbox :label="(() => {
                   if (state.userInfo.ENABLED) {
                     if (state.enabled === state.userInfo.ENABLED) {
@@ -247,9 +263,9 @@
           </v-row>
 
           <v-row class="d-flex align-top justify-center"
-            v-if="state.twitchUserInfo !== null && state.userInfo !== null && (!state.twitchExtensionEnabled || (state.twitchExtensionEnabled && !state.editDiscordInfo && !state.editTwitchInfo && !state.editExchangeKeys))">
+            v-if="state.twitchUserInfo !== null && state.userInfo !== null && (!state.twitchExtensionEnabled || (state.twitchExtensionEnabled && !state.editDiscordInfo && !state.editTwitchInfo && !state.editExchangeKeys && !state.showChannelPositions))">
             <v-col cols="auto">
-              <div v-if="!state.editDiscordInfo && !state.editTwitchInfo && !state.editExchangeKeys">
+              <div v-if="!state.editDiscordInfo && !state.editTwitchInfo && !state.editExchangeKeys && !state.showChannelPositions">
                 <v-tooltip
                   :text="`${state.userInfo.IS_RUNNING ? 'Stop Bot from pulling data' : 'Start Bot from pulling data'}`"
                   location="bottom">
@@ -275,8 +291,7 @@
             </v-col>
           </v-row>
 
-          <v-row class="d-flex align-top justify-center"
-            v-if="state.twitchUserInfo !== null && state.userInfo !== null">
+          <v-row class="d-flex align-top justify-center" v-if="state.twitchUserInfo !== null && state.userInfo !== null">
             <v-col cols="auto" :style="state.twitchExtensionEnabled ? 'width: 100%' : ''" v-if="state.editExchangeKeys">
               <div
                 :style="`${state.twitchExtensionEnabled ? '' : 'margin-top: 1em;'} padding: 1em; ${state.twitchExtensionEnabled ? 'background-color: rgba(255, 255, 255, 0.01)' : ''}`"
@@ -396,6 +411,71 @@
                 </p>
               </div>
             </v-col>
+            <v-col cols="auto" :style="state.twitchExtensionEnabled ? 'width: 100%' : ''" v-if="state.showChannelPositions">
+              <div
+                :style="`margin-top: 1em; min-width: ${state.twitchExtensionEnabled ? '0' : '400px'}; padding: 1em;`" class="overflow-y-auto justify-center" v-if="state.showChannelPositions">
+                <h3>Channel Positions</h3>
+                <br/>
+                <div v-for="(position, index) in channelPositions" :key="'position-'+index">
+                  <div style="margin: 0 auto; width: 250px; height: 300px; text-align: center;" :class="`${position.side === 'long' ? 'animatedGlow long' : 'animatedGlow short'}`">
+                    {{ position.exchangeId }}<br/>{{ position.symbol.split(":")[0] }}
+                    <v-tooltip text="In Profit" v-if="Number.parseFloat(Number.parseFloat(position.unrealizedPnl).toFixed(4)) > 0">
+                      <template v-slot:activator="{ props }">
+                        <LottieAnimation  v-bind="props" :animation-data="UpArrowAnimation" :height="64" :width="64"/>
+                      </template>
+                    </v-tooltip>
+                    <v-tooltip text="Underwater" v-else-if="Number.parseFloat(Number.parseFloat(position.unrealizedPnl).toFixed(4)) < 0">
+                      <template v-slot:activator="{ props }">
+                        <LottieAnimation v-bind="props" :animation-data="DownArrowAnimation" :height="64" :width="64"/>
+                      </template>
+                    </v-tooltip>
+                    <v-tooltip text="Crabbing" v-else>
+                      <template v-slot:activator="{ props }">
+                        <LottieAnimation v-bind="props" :animation-data="CrabAnimation" :height="64" :width="64"/>
+                      </template>
+                    </v-tooltip>
+                    <table style="margin: 0 auto; width: 100%; text-align: center; table-layout: fixed;">
+                      <tr>
+                        <td>uPnL</td>
+                        <td :style="`${(Number.parseFloat(Number.parseFloat(position.unrealizedPnl).toFixed(4)) > 0 ? 'color: #a0fd00;' : Number.parseFloat(Number.parseFloat(position.unrealizedPnl).toFixed(4)) < 0 ? 'color: #fd0000;' : '' )}`">{{ Number.parseFloat(Number.parseFloat(position.unrealizedPnl).toFixed(4)).toLocaleString("en-US") }} {{ position.symbol.split(":")[1] }}</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          Side
+                        </td>
+                        <td>
+                          {{ position.side.toUpperCase() }}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          Size
+                        </td>
+                        <td>
+                          {{ Number.parseFloat((Number.parseFloat(position.contracts) * Number.parseFloat(position.contractSize)).toFixed(4)).toLocaleString("en-US") }}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Entry</td>
+                        <td>{{ Number.parseFloat(Number.parseFloat(position.entryPrice).toFixed(2)).toLocaleString("en-US") }}</td>
+                      </tr>
+                      <tr>
+                        <td>Mark</td>
+                        <td>{{ Number.parseFloat(Number.parseFloat(position.markPrice).toFixed(2)).toLocaleString("en-US") }}</td>
+                      </tr>
+                      <tr>
+                        <td>Liq</td>
+                        <td>{{ Number.parseFloat(Number.parseFloat(position.liquidationPrice).toFixed(2)).toLocaleString("en-US") }}</td>
+                      </tr>
+                    </table>
+                  </div>
+                  <br>
+                </div>
+                <span v-if="channelPositions.length === 0">
+                  No open Positions.
+                </span>
+              </div>
+            </v-col>
           </v-row>
 
         </v-responsive>
@@ -417,6 +497,10 @@ import axios from 'axios'
 import { v4 as uuidv4 } from 'uuid'
 import validExchanges from './exchanges';
 import { computed } from '@vue/reactivity';
+import UpArrowAnimation from './lottie/up-arrow.json'
+import DownArrowAnimation from './lottie/down-arrow.json'
+import CrabAnimation from './lottie/crab.json'
+
 
 type AlertType = "success" | "error" | "warning" | "info" | undefined
 
@@ -439,6 +523,10 @@ const exchangeKeys = ref<Array<ExchangeKey>>([])
 const computedExchangeKeysHash = computed(() => {
   return Buffer.from(JSON.stringify(exchangeKeys.value), 'utf-8').toString('base64')
 })
+const channelPositions = ref<Array<any>>([
+  // { side: 'long', entryPrice: 20000, markPrice: 20000, liquidationPrice: 10000, unrealizedPnl: 1, contracts: 1, contractSize: 1, exchangeId: 'mexc3', symbol: 'BTC-USDT:USDT'  },
+  // { side: 'short', entryPrice: 20000, markPrice: 20000, liquidationPrice: 10000, unrealizedPnl: 1, contracts: 1, contractSize: 1, exchangeId: 'mexc3', symbol: 'BTC-USDT:USDT'  }
+])
 const twitchAccessToken = ref<any>({})
 const twitchUserInfo = ref<any>(null);
 const editExchangeKeys = ref<boolean>(false);
@@ -449,6 +537,7 @@ const startDialog = ref<boolean>(false);
 const stopDialog = ref<boolean>(false);
 const setRefDialog = ref<boolean>(false);
 const editTwitchInfo = ref<boolean>(false);
+const showChannelPositions = ref<boolean>(false);
 const discordChannelId = ref<string>('');
 const discordMessageId = ref<string>('');
 const enabled = ref<boolean>(false);
@@ -476,6 +565,7 @@ const state = reactive({
   alert,
   copiedRefLink,
   refLink,
+  channelPositions,
   referrals,
   exchangeKeys,
   exchangeKeyOpen,
@@ -484,6 +574,7 @@ const state = reactive({
   editExchangeKeys,
   editDiscordInfo,
   editTwitchInfo,
+  showChannelPositions,
   discordChannelId,
   discordMessageId,
   enabled,
@@ -620,6 +711,17 @@ const getTwitchUserInfo = (): Promise<void> => {
     })
   })
 
+}
+
+const getChannelPositions = (): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    axios.get(`${backend.value}/getChannelPositions?access_token=${state.twitchAccessToken.access_token}&is_helix=${state.twitchExtensionEnabled}&client_id=${state.twitchAccessToken.client_id}&channel_id=${state.twitchAccessToken.channel_id}`).then((positions) => {
+      state.channelPositions = positions.data;
+    }).catch(error => {
+      notify('failed to retrieve channel positions', 'error');
+      console.error(error);
+    })
+  })
 }
 
 const getUserInfo = (): Promise<void> => {
@@ -1077,4 +1179,24 @@ interface TwitchUserInfo {
   border-radius: 10px;
   border: 3px solid #121212;
 }
+
+.animatedGlow {
+  position: relative;
+  height: 250px;
+  width: 250px;
+  min-width: 20px;
+  padding: 20px 20px;
+  font-size: 0.8em;
+  margin: 100px auto;
+  border-radius:10px; 
+}
+
+.animatedGlow.short {
+  border: #fd0000 solid 1px;
+}
+
+.animatedGlow.long {
+  border: #a0fd00 solid 1px;
+}
+
 </style>
